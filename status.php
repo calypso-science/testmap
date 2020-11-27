@@ -1,5 +1,5 @@
 <?php
-print "success";
+print "sucess";
 return 0;
 ?>
 

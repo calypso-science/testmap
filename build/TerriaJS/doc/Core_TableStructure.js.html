@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Core/TableStructure.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Core/TableStructure.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*global require*/
+"use strict";
+
+var defaultValue = require('terriajs-cesium/Source/Core/defaultValue');
+var defined = require('terriajs-cesium/Source/Core/defined');
+var defineProperties = require('terriajs-cesium/Source/Core/defineProperties');
+var destroyObject = require('terriajs-cesium/Source/Core/destroyObject');
+var DeveloperError = require('terriajs-cesium/Source/Core/DeveloperError');
+var knockout = require('terriajs-cesium/Source/ThirdParty/knockout');
+
+var csv = require('../ThirdParty/csv');
+var DisplayVariablesConcept = require('../Models/DisplayVariablesConcept');
+var formatPropertyValue = require('../Core/formatPropertyValue');
+var inherit = require('../Core/inherit');
+var TableColumn = require('./TableColumn');
+var VarType = require('../Map/VarType');
+
+var defaultDisplayVariableTypes = [VarType.ENUM, VarType.SCALAR, VarType.ALT];
+
+/**
+ * TableStructure provides an abstraction of a data table, ie. a structure with rows and columns.
+ * Its primary responsibility is to load and parse the data, from csvs or other.
+ * It stores each column as a TableColumn, and saves the rows too if conversion to rows is requested.
+ * Columns are also sorted by type for easier access.
+ *
+ * @alias TableStructure
+ * @constructor
+ * @extends {DisplayVariablesConcept}
+ * @param {String} [name] Name to use in the NowViewing tab, defaults to 'Display Variable'.
+ * @param {Object} [options] Options:
+ * @param {Array} [options.displayVariableTypes] Which variable types to show in the NowViewing tab. Defaults to ENUM, SCALAR, and ALT (not LAT, LON or TIME).
+ * @param {VarType[]} [options.unallowedTypes] An array of types which should not be guessed. If not present, all types are allowed. Cannot include VarType.SCALAR.
+ * @param {Number} [options.displayDuration] Passed on to TableColumn.
+ * @param {String[]} [options.replaceWithNullValues] Passed on to TableColumn.
+ * @param {String[]} [options.replaceWithZeroValues] Passed on to TableColumn.
+ */
+var TableStructure = function(name, options) {
+    DisplayVariablesConcept.call(this, name);
+    options = defaultValue(options, defaultValue.EMPTY_OBJECT);
+
+    this.displayVariableTypes = defaultValue(options.displayVariableTypes, defaultDisplayVariableTypes);
+    this.unallowedTypes = options.unallowedTypes;
+    this.displayDuration = options.displayDuration;
+    this.replaceWithNullValues = options.replaceWithNullValues;
+    this.replaceWithZeroValues = options.replaceWithZeroValues;
+
+    /**
+     * Gets or sets the active time column for this structure,
+     * @memberOf TableStructure.prototype
+     * @type {TableColumn}
+     */
+    this.activeTimeColumn = undefined;
+
+    this._rows = undefined;  // Store a copy by rows too, to simplify row-based operations.
+
+    /**
+     * Gets the columnsByType for this structure,
+     * an object whose keys are VarTypes, and whose values are arrays of TableColumn with matching type.
+     * Only existing types are present (eg. columnsByType[VarType.ALT] may be undefined).
+     * @memberOf TableStructure.prototype
+     * @type {Object}
+     */
+    knockout.defineProperty(this, 'columnsByType', {
+        get: function() {
+            return getColumnsByType(this.items);
+        }
+    });
+};
+inherit(DisplayVariablesConcept, TableStructure);
+
+defineProperties(TableStructure.prototype, {
+    /**
+     * Gets or sets the columns for this structure.
+     * @memberOf TableStructure.prototype
+     * @type {TableColumn[]}
+     */
+    columns: {
+        get: function() {
+            return this.items;
+        },
+        set: function(value) {
+            if (areColumnsEqualLength(value)) {
+                this._rows = buildRowsFromColumns(this, value);
+                this.items = value;
+            } else {
+                var msg = 'Badly formed data table - columns have different lengths.';
+                console.log(msg);
+                throw new DeveloperError(msg);
+            }
+        }
+    },
+
+    /**
+     * Gets a flag which states whether this data has latitude and longitude data.
+     * @type {Boolean}
+     */
+    hasLatitudeAndLongitude: {
+        get: function() {
+            var longitudeColumn = this.columnsByType[VarType.LON][0];
+            var latitudeColumn = this.columnsByType[VarType.LAT][0];
+            return (defined(longitudeColumn) &amp;&amp; defined(latitudeColumn));
+        }
+    }
+});
+
+/**
+* Create a TableStructure from a JSON object, eg. [['x', 'y'], [1, 5], [3, 8], [4, -3]].
+*
+* @param {Object} json Table data as an object (in json format).
+* @param {TableStructure} [result] A pre-existing TableStructure object; if not present, creates a new one.
+*/
+TableStructure.fromJson = function(json, result) {
+    if (!defined(json) || json.length === 0 || json[0].length === 0) {
+        return;
+    }
+    if (!defined(result)) {
+        result = new TableStructure();
+    }
+    // build up the columns (=== items) and then replace them all in one go, so that knockout's tracking doesn't see every change
+    var columns = [];
+    result._rows = json;
+    var columnNames = json[0];
+    var rowNumber, name, values;
+    for (var columnNumber = 0; columnNumber &lt; columnNames.length; columnNumber++) {
+        name = columnNames[columnNumber] ? columnNames[columnNumber].trim() : "_Column" + String(columnNumber);
+        values = [];
+        for (rowNumber = 1; rowNumber &lt; json.length; rowNumber++) {
+            values.push(json[rowNumber][columnNumber]);
+        }
+        columns.push(new TableColumn(name, values, {
+            tableStructure: result,
+            displayVariableTypes: result.displayVariableTypes,
+            unallowedTypes: result.unallowedTypes,
+            displayDuration: result.displayDuration,
+            replaceWithNullValues: result.replaceWithNullValues,
+            replaceWithZeroValues: result.replaceWithZeroValues
+        }));
+    }
+    result.items = columns;
+    return result;
+};
+
+/**
+* Create a TableStructure from a string in csv format.
+* Understands \r\n, \r and \n as newlines.
+*
+* @param {String} csvString String in csv format.
+* @param {TableStructure} [result] A pre-existing TableStructure object; if not present, creates a new one.
+*/
+TableStructure.fromCsv = function(csvString, result) {
+
+    // Originally from jquery-csv plugin. Modified to avoid stripping leading zeros.
+    function castToScalar(value, state) {
+        var hasDot = /\./;
+        var leadingZero = /^0[0-9]/;
+        var numberWithThousands = /^[1-9]\d?\d?(,\d\d\d)+(\.\d+)?$/;
+        if (numberWithThousands.test(value)) {
+            value = value.replace(/,/g, '');
+        }
+        if (isNaN(value)) {
+            return value;
+        }
+        if (leadingZero.test(value)) {
+            return value;
+        }
+        if (hasDot.test(value)) {
+          return parseFloat(value);
+        }
+        var integer = parseInt(value);
+        if (isNaN(integer)) {
+            return null;
+        }
+        return integer;
+    }
+
+    //normalize line breaks
+    csvString = csvString.replace(/\r\n|\r|\n/g, "\r\n");
+    // Handle CSVs missing a final linefeed
+    if (csvString[csvString.length - 1] !== '\n') {
+        csvString += '\r\n';
+    }
+    var json = csv.toArrays(csvString, {
+        onParseValue: castToScalar
+    });
+    // Remove extra blank lines at the end.
+    var n = 0;
+    for (var i = json.length - 1; i >= 0; i--) {
+        if (json[i].length === 1 &amp;&amp; json[i][0] === null) {
+            n += 1;
+        }
+    }
+    json.splice(json.length - n, n);
+    return TableStructure.fromJson(json, result);
+};
+
+
+/**
+* Load a JSON object into an existing TableStructure.
+*
+* @param {Object} json Table data as an object (in json format).
+*/
+TableStructure.prototype.loadFromJson = function(json) {
+    return TableStructure.fromJson(json, this);
+};
+
+/**
+* Load a string in csv format into an existing TableStructure.
+*
+* @param {String} csvString String in csv format.
+*/
+TableStructure.prototype.loadFromCsv = function(csvString) {
+    return TableStructure.fromCsv(csvString, this);
+};
+
+/**
+* Return data as an array of columns, eg. [ ['x', 1, 2, 3], ['y', 10, 20, 5] ].
+* @returns {Object} An array of column arrays, each beginning with the column name.
+*/
+TableStructure.prototype.toArrayOfColumns = function() {
+    var result = [];
+    var column;
+    for (var i = 0; i &lt; this.columns.length; i++) {
+        column = this.columns[i];
+        result.push(column.toArrayWithName());
+    }
+    return result;
+};
+
+/**
+* Return data as an array of rows, eg. [ ['x', 'y'], [1, 10], [2, 20], [3, 5] ].
+* @returns {Object} An array of rows, the first of which is the column names.
+*/
+TableStructure.prototype.toArrayOfRows = function() {
+    return this._rows;
+};
+
+/**
+* Return data as a string in csv format, with newlines represented by \n.
+* @returns {String} csv formatted version of the data.
+*/
+TableStructure.prototype.toCsvString = function() {
+    var table = this.getJsonTable();
+    //Serialize the arrays
+    var joinedRows = table.map(function(arr) {
+        return arr.join(',');
+    });
+    var tableText = joinedRows.join('\n');
+    return tableText;
+};
+
+/**
+* Return data as an array of rows of objects, eg. [{'x': 1, 'y': 10}, {'x': 2, 'y': 20}, ...].
+* Note this won't work if a column name is a javascript reserved word.
+*
+* @returns {Object[]} Array of objects containing a property for each column of the row.
+*/
+TableStructure.prototype.toRowObjects = function() {
+    var asRows = this.toArrayOfRows();
+    var columnNames = asRows[0];
+    var result = [];
+    for (var i = 1; i &lt; asRows.length; i++) {
+        var rowObject = {};
+        for (var j = 0; j &lt; columnNames.length; j++) {
+            rowObject[columnNames[j]] = asRows[i][j];
+        }
+        result.push(rowObject);
+    }
+    return result;
+};
+
+
+function describeRow(tableStructure, rowObject, index, infoFields) {
+    var html = '&lt;table class="cesium-infoBox-defaultTable">';
+    var columnNames = tableStructure.getColumnNames();
+    for (var key in infoFields) {
+        if (infoFields.hasOwnProperty(key)) {
+            var value = rowObject[key];
+            if (defined(value)) {
+                var columnType;
+                if (columnNames.indexOf(key) >= 0) {
+                    columnType = tableStructure.columns[columnNames.indexOf(key)].type;
+                }
+                // Skip keys starting with double underscore
+                if (key.substring(0, 2) === '__') {
+                    continue;
+                } else if (columnType === VarType.TIME) {
+                    // If the original string contains a "T", then it is ISO8601 format, and we can format it more nicely.
+                    if ((typeof value === 'string' || value instanceof String) &amp;&amp; value.indexOf('T') >= 0) {
+                        var time = value.split('T')[1];
+                        value = tableStructure.columns[columnNames.indexOf(key)].dates[index];
+                        // value is now a javascript Date, which will display as eg. Thu Jan 28 2016 15:22:37 GMT+1100 (AEDT).
+                        // If there was no timezone info in the original, remove the timezone info from the output string.
+                        if (!((time.indexOf('+') >= 0) || (time.indexOf('-') >= 0) || (time.indexOf('Z') >= 0))) {
+                            value = value.toDateString() + ' ' + value.toTimeString().split(' ')[0];
+                        }
+                    }
+                } else if (value === null) {
+                    value = '';
+                } else if (typeof value === 'object') {  // Can this happen?
+                    value = describeRow(tableStructure, value, index, infoFields);
+                } else {
+                    value = formatPropertyValue(value);
+                }
+                html += '&lt;tr>&lt;td>' + infoFields[key] + '&lt;/td>&lt;td>' + value + '&lt;/td>&lt;/tr>';
+            }
+        }
+    }
+    html += '&lt;/table>';
+    return html;
+}
+
+/**
+ * Returns data as an array of html for each row.
+ * @param  {Array|Object} [featureInfoFields] Either an array of keys from the row objects, or an object that maps keys to names of keys.
+ *         If not provided, defaults to using all keys unaltered.
+ * @return {String[]} Array of html for each row.
+ */
+TableStructure.prototype.toRowDescriptions = function(featureInfoFields) {
+    var infoFields = defined(featureInfoFields) ? featureInfoFields : this.getColumnNames();
+    if (infoFields instanceof Array) {
+        // Allow [ "FIELD1", "FIELD2" ] as a shorthand for { "FIELD1": "FIELD1", "FIELD2": "FIELD2" }
+        var o = {};
+        infoFields.forEach(function(key) {
+            o[key] = key;
+        });
+        infoFields = o;
+    }
+    var that = this;
+    return this.toRowObjects().map(function(rowObject, index) { return describeRow(that, rowObject, index, infoFields); });
+};
+
+/**
+* Get the column names.
+*
+* @returns {String[]} Array of column names.
+*/
+TableStructure.prototype.getColumnNames = function() {
+    var result = [];
+    for (var i = 0; i &lt; this.columns.length; i++) {
+        result.push(this.columns[i].name);
+    }
+    return result;
+};
+
+/**
+* Returns the first column with the given name, or undefined if none match.
+*
+* @param {String} name The column name.
+* @returns {TableColumn} The matching column.
+*/
+TableStructure.prototype.getColumnWithName = function(name) {
+    for (var i = 0; i &lt; this.columns.length; i++) {
+        if (this.columns[i].name === name) {
+            return this.columns[i];
+        }
+    }
+};
+
+/**
+* Returns the first column with the given name or index, or undefined if none match (or null is passed in).
+*
+* @param {String|Integer|null} nameOrIndex The column name or index.
+* @returns {TableColumn} The matching column.
+*/
+TableStructure.prototype.getColumnWithNameOrIndex = function(nameOrIndex) {
+    if (nameOrIndex === null) {
+        return undefined;
+    }
+    if (isInteger(nameOrIndex)) {
+        return this.columns[nameOrIndex];
+    }
+    return this.getColumnWithName(nameOrIndex);
+};
+
+
+/**
+ * Destroy the object and release resources. Is this necessary?
+ */
+TableStructure.prototype.destroy = function() {
+    return destroyObject(this);
+};
+
+/**
+ * Normally a TableStructure is generated from a csvString, using loadFromCsv, or via loadFromJson.
+ * However, if its columns are set directly, we should check the columns are all the same length.
+ *
+ * @param  {Concept[]} columns Array of columns to check.
+ * @return {Boolean} True if the columns are all the same length, false otherwise.
+ */
+function areColumnsEqualLength(columns) {
+    if (columns.length &lt;= 1) {
+        return true;
+    }
+    var firstLength = columns[0].values.length;
+    var columnsWithTheSameLength = columns.slice(1).filter(function(column) { return column.values.length === firstLength; });
+    return columnsWithTheSameLength.length === columns.length - 1;
+}
+/**
+ * Normally a TableStructure is generated from a csvString, using loadFromCsv, or via loadFromJson.
+ * However, if its columns are set directly, we need to manually build tableStructure._rows,
+ * so that several of its methods work correctly.
+ *
+ * @param  {TableStructure} tableStructure This TableStructure instance.
+ * @param  {Concept[]} columns Array of columns.
+ * @return {Array[]} Array of rows values, starting with the column names.
+ */
+function buildRowsFromColumns(tableStructure, columns) {
+    if (columns.length === 0) {
+        return {};
+    }
+    var columnNames = columns.map(function(column) { return column.name; });
+    var data = columns[0].values.map(function(value, rowIndex) {
+        return columns.map(function(column) { return column.values[rowIndex]; });
+    });
+    data.unshift(columnNames);  // Put column names in the first row.
+    return data;
+}
+
+/**
+ * Given columns, returns columnsByType, which is an object whose keys are elements of VarType,
+ * and whose values are arrays of TableColumn objects of that type.
+ * All types are present (eg. structure.columnsByType[VarType.ALT] always exists), possibly [].
+ */
+function getColumnsByType(columns) {
+    var columnsByType = {};
+    for (var varType in VarType) {
+        if (VarType.hasOwnProperty(varType)) {
+            var v = VarType[varType];  // we don't want the keys to be LAT, LON, ..., but 0, 1, ...
+            columnsByType[v] = [];
+        }
+    }
+    for (var i = 0; i &lt; columns.length; i++) {
+        var column = columns[i];
+        columnsByType[column.type].push(column);
+    }
+    return columnsByType;
+}
+
+function isInteger(value) {
+    return (!isNaN(value)) &amp;&amp; (parseInt(Number(value)) === +value) &amp;&amp; (!isNaN(parseInt(value)));
+}
+
+module.exports = TableStructure;
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbsCode.html">AbsCode</a></li><li><a href="AbsConcept.html">AbsConcept</a></li><li><a href="AbsDataset.html">AbsDataset</a></li><li><a href="AbsIttCatalogGroup.html">AbsIttCatalogGroup</a></li><li><a href="AbsIttCatalogItem.html">AbsIttCatalogItem</a></li><li><a href="ArcGisCatalogGroup.html">ArcGisCatalogGroup</a></li><li><a href="ArcGisMapServerCatalogItem.html">ArcGisMapServerCatalogItem</a></li><li><a href="BingMapsCatalogItem.html">BingMapsCatalogItem</a></li><li><a href="CameraView.html">CameraView</a></li><li><a href="Catalog.html">Catalog</a></li><li><a href="CatalogGroup.html">CatalogGroup</a></li><li><a href="CatalogItem.html">CatalogItem</a></li><li><a href="CatalogMember.html">CatalogMember</a></li><li><a href="CatalogMemberControl.html">CatalogMemberControl</a></li><li><a href="CatalogMemberDownloadControl.html">CatalogMemberDownloadControl</a></li><li><a href="Cesium.html">Cesium</a></li><li><a href="CkanCatalogGroup.html">CkanCatalogGroup</a></li><li><a href="CkanCatalogItem.html">CkanCatalogItem</a></li><li><a href="CompositeCatalogItem.html">CompositeCatalogItem</a></li><li><a href="Concept.html">Concept</a></li><li><a href="CsvCatalogItem.html">CsvCatalogItem</a></li><li><a href="CswCatalogGroup.html">CswCatalogGroup</a></li><li><a href="CzmlCatalogItem.html">CzmlCatalogItem</a></li><li><a href="DisplayVariablesConcept.html">DisplayVariablesConcept</a></li><li><a href="ExplorerPanelViewModel.html">ExplorerPanelViewModel</a></li><li><a href="FeatureInfoPanelSectionViewModel.html">FeatureInfoPanelSectionViewModel</a></li><li><a href="FeatureInfoPanelViewModel.html">FeatureInfoPanelViewModel</a></li><li><a href="GeoJsonCatalogItem.html">GeoJsonCatalogItem</a></li><li><a href="GlobeOrMap.html">GlobeOrMap</a></li><li><a href="GpxCatalogItem.html">GpxCatalogItem</a></li><li><a href="ImageryLayerCatalogItem.html">ImageryLayerCatalogItem</a></li><li><a href="KmlCatalogItem.html">KmlCatalogItem</a></li><li><a href="Leaflet.html">Leaflet</a></li><li><a href="LeafletGeomVisualizer.html">LeafletGeomVisualizer</a></li><li><a href="LegendHelper.html">LegendHelper</a></li><li><a href="LegendUrl.html">LegendUrl</a></li><li><a href="MapboxMapCatalogItem.html">MapboxMapCatalogItem</a></li><li><a href="MapProgressBarViewModel.html">MapProgressBarViewModel</a></li><li><a href="Metadata.html">Metadata</a></li><li><a href="MetadataItem.html">MetadataItem</a></li><li><a href="NavigationControl.html">NavigationControl</a></li><li><a href="OgrCatalogItem.html">OgrCatalogItem</a></li><li><a href="OpenStreetMapCatalogItem.html">OpenStreetMapCatalogItem</a></li><li><a href="RegionMapping.html">RegionMapping</a></li><li><a href="RegionProvider.html">RegionProvider</a></li><li><a href="RegionProviderList.html">RegionProviderList</a></li><li><a href="ResetViewNavigationControl.html">ResetViewNavigationControl</a></li><li><a href="SocrataCatalogGroup.html">SocrataCatalogGroup</a></li><li><a href="TableColumn.html">TableColumn</a></li><li><a href="TableDataSource.html">TableDataSource</a></li><li><a href="TableStructure.html">TableStructure</a></li><li><a href="Terria.html">Terria</a></li><li><a href="TerriaError.html">TerriaError</a></li><li><a href="TimeSeriesStack.html">TimeSeriesStack</a></li><li><a href="UrthecastCatalogGroup.html">UrthecastCatalogGroup</a></li><li><a href="UrthecastServerCatalogItem.html">UrthecastServerCatalogItem</a></li><li><a href="UserInterfaceControl.html">UserInterfaceControl</a></li><li><a href="VariableConcept.html">VariableConcept</a></li><li><a href="WebFeatureServiceCatalogGroup.html">WebFeatureServiceCatalogGroup</a></li><li><a href="WebFeatureServiceCatalogItem.html">WebFeatureServiceCatalogItem</a></li><li><a href="WebMapServiceCatalogGroup.html">WebMapServiceCatalogGroup</a></li><li><a href="WebMapServiceCatalogItem.html">WebMapServiceCatalogItem</a></li><li><a href="WebMapTileServiceCatalogGroup.html">WebMapTileServiceCatalogGroup</a></li><li><a href="WebMapTileServiceCatalogItem.html">WebMapTileServiceCatalogItem</a></li><li><a href="WfsFeaturesCatalogGroup.html">WfsFeaturesCatalogGroup</a></li><li><a href="ZoomInNavigationControl.html">ZoomInNavigationControl</a></li><li><a href="ZoomOutNavigationControl.html">ZoomOutNavigationControl</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-FeatureInfoTemplate.html">FeatureInfoTemplate</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addItem">addItem</a></li><li><a href="global.html#addUserCatalogMember">addUserCatalogMember</a></li><li><a href="global.html#allFeaturesAvailablePromise">allFeaturesAvailablePromise</a></li><li><a href="global.html#allowMultiple">allowMultiple</a></li><li><a href="global.html#allShareKeys">allShareKeys</a></li><li><a href="global.html#applyHintsToName">applyHintsToName</a></li><li><a href="global.html#applyReplacements">applyReplacements</a></li><li><a href="global.html#areColumnsEqualLength">areColumnsEqualLength</a></li><li><a href="global.html#barHeightMax">barHeightMax</a></li><li><a href="global.html#barHeightMin">barHeightMin</a></li><li><a href="global.html#barLeft">barLeft</a></li><li><a href="global.html#barTop">barTop</a></li><li><a href="global.html#buildBinColors">buildBinColors</a></li><li><a href="global.html#buildRowsFromColumns">buildRowsFromColumns</a></li><li><a href="global.html#buildTableColumns">buildTableColumns</a></li><li><a href="global.html#calculateAvailabilities">calculateAvailabilities</a></li><li><a href="global.html#calculateAvailability">calculateAvailability</a></li><li><a href="global.html#calculateRegionIndices">calculateRegionIndices</a></li><li><a href="global.html#calculateShow">calculateShow</a></li><li><a href="global.html#changedActiveItems">changedActiveItems</a></li><li><a href="global.html#checkBrowserCompatibility">checkBrowserCompatibility</a></li><li><a href="global.html#clampDisplayValue">clampDisplayValue</a></li><li><a href="global.html#colorArrayToColor">colorArrayToColor</a></li><li><a href="global.html#colorBinMethod">colorBinMethod</a></li><li><a href="global.html#colorBins">colorBins</a></li><li><a href="global.html#ColorMap">ColorMap</a></li><li><a href="global.html#combineFilters">combineFilters</a></li><li><a href="global.html#computeScreenSpacePosition">computeScreenSpacePosition</a></li><li><a href="global.html#containsAny">containsAny</a></li><li><a href="global.html#convertToDates">convertToDates</a></li><li><a href="global.html#createCatalogItemFromFileOrUrl">createCatalogItemFromFileOrUrl</a></li><li><a href="global.html#createCatalogItemFromUrl">createCatalogItemFromUrl</a></li><li><a href="global.html#createCatalogMemberFromType">createCatalogMemberFromType</a></li><li><a href="global.html#createClock">createClock</a></li><li><a href="global.html#createLeafletCredit">createLeafletCredit</a></li><li><a href="global.html#createRegexDeserializer">createRegexDeserializer</a></li><li><a href="global.html#createRegexSerializer">createRegexSerializer</a></li><li><a href="global.html#dataVariable">dataVariable</a></li><li><a href="global.html#deIndexWithDescendants">deIndexWithDescendants</a></li><li><a href="global.html#direction">direction</a></li><li><a href="global.html#DISPLAYABLE_MIME_TYPES">DISPLAYABLE_MIME_TYPES</a></li><li><a href="global.html#displayDuration">displayDuration</a></li><li><a href="global.html#drawGradient">drawGradient</a></li><li><a href="global.html#drawItemBoxes">drawItemBoxes</a></li><li><a href="global.html#drawItemLabels">drawItemLabels</a></li><li><a href="global.html#drawVariableName">drawVariableName</a></li><li><a href="global.html#EarthGravityModel1996">EarthGravityModel1996</a></li><li><a href="global.html#error">error</a></li><li><a href="global.html#extent">extent</a></li><li><a href="global.html#featureClicked">featureClicked</a></li><li><a href="global.html#featureInfoFields">featureInfoFields</a></li><li><a href="global.html#features">features</a></li><li><a href="global.html#findRegionIndex">findRegionIndex</a></li><li><a href="global.html#flattenCatalog">flattenCatalog</a></li><li><a href="global.html#formatNumberWithCommas">formatNumberWithCommas</a></li><li><a href="global.html#formatPropertyValue">formatPropertyValue</a></li><li><a href="global.html#generateCsvData">generateCsvData</a></li><li><a href="global.html#generateLegend">generateLegend</a></li><li><a href="global.html#getColumnsByType">getColumnsByType</a></li><li><a href="global.html#getFractionalValue">getFractionalValue</a></li><li><a href="global.html#getHumanReadableConceptName">getHumanReadableConceptName</a></li><li><a href="global.html#getParentIds">getParentIds</a></li><li><a href="global.html#getUniqueValues">getUniqueValues</a></li><li><a href="global.html#gmlToGeoJson">gmlToGeoJson</a></li><li><a href="global.html#gradientColorMap">gradientColorMap</a></li><li><a href="global.html#hasChildren">hasChildren</a></li><li><a href="global.html#hasLatitudeAndLongitude">hasLatitudeAndLongitude</a></li><li><a href="global.html#hasText">hasText</a></li><li><a href="global.html#imageUrl">imageUrl</a></li><li><a href="global.html#indexWithDescendants">indexWithDescendants</a></li><li><a href="global.html#invalidDropClasses">invalidDropClasses</a></li><li><a href="global.html#invalidDropElements">invalidDropElements</a></li><li><a href="global.html#isBrowserCompatible">isBrowserCompatible</a></li><li><a href="global.html#isCommonMobilePlatform">isCommonMobilePlatform</a></li><li><a href="global.html#isLoading">isLoading</a></li><li><a href="global.html#isOpen">isOpen</a></li><li><a href="global.html#isVisible">isVisible</a></li><li><a href="global.html#itemHeight">itemHeight</a></li><li><a href="global.html#itemHeightMin">itemHeightMin</a></li><li><a href="global.html#items">items</a></li><li><a href="global.html#itemSpacing">itemSpacing</a></li><li><a href="global.html#itemWidth">itemWidth</a></li><li><a href="global.html#itemY">itemY</a></li><li><a href="global.html#Legend">Legend</a></li><li><a href="global.html#legendTicks">legendTicks</a></li><li><a href="global.html#legendUrl">legendUrl</a></li><li><a href="global.html#loadConceptIdsAndConceptNameMap">loadConceptIdsAndConceptNameMap</a></li><li><a href="global.html#loadConcepts">loadConcepts</a></li><li><a href="global.html#loadDataFiles">loadDataFiles</a></li><li><a href="global.html#loadRegionsFromWfs">loadRegionsFromWfs</a></li><li><a href="global.html#longestTitle">longestTitle</a></li><li><a href="global.html#makeDataUri">makeDataUri</a></li><li><a href="global.html#map">map</a></li><li><a href="global.html#maxDisplayValue">maxDisplayValue</a></li><li><a href="global.html#minDisplayValue">minDisplayValue</a></li><li><a href="global.html#NowViewing">NowViewing</a></li><li><a href="global.html#nullColor">nullColor</a></li><li><a href="global.html#overrideProperty">overrideProperty</a></li><li><a href="global.html#PickedFeatures">PickedFeatures</a></li><li><a href="global.html#pickPosition">pickPosition</a></li><li><a href="global.html#position">position</a></li><li><a href="global.html#processRegionIds">processRegionIds</a></li><li><a href="global.html#Proj4Definitions">Proj4Definitions</a></li><li><a href="global.html#rectangle">rectangle</a></li><li><a href="global.html#rectangleToLatLngBounds">rectangleToLatLngBounds</a></li><li><a href="global.html#redisplayRegions">redisplayRegions</a></li><li><a href="global.html#regionDetails">regionDetails</a></li><li><a href="global.html#regionType">regionType</a></li><li><a href="global.html#regionVariable">regionVariable</a></li><li><a href="global.html#rememberRejections">rememberRejections</a></li><li><a href="global.html#replaceWithNullValues">replaceWithNullValues</a></li><li><a href="global.html#replaceWithZeroValues">replaceWithZeroValues</a></li><li><a href="global.html#scale">scale</a></li><li><a href="global.html#scaleByValue">scaleByValue</a></li><li><a href="global.html#selectBaseMap">selectBaseMap</a></li><li><a href="global.html#serializeToJson">serializeToJson</a></li><li><a href="global.html#setNewRegionImageryLayer">setNewRegionImageryLayer</a></li><li><a href="global.html#shareKeyIndex">shareKeyIndex</a></li><li><a href="global.html#SharePopupViewModel">SharePopupViewModel</a></li><li><a href="global.html#shouldBeUpdated">shouldBeUpdated</a></li><li><a href="global.html#showSelection">showSelection</a></li><li><a href="global.html#simpleArrayToArray">simpleArrayToArray</a></li><li><a href="global.html#stringToArray">stringToArray</a></li><li><a href="global.html#supportsIntervals">supportsIntervals</a></li><li><a href="global.html#supportsWebGL">supportsWebGL</a></li><li><a href="global.html#TableStyle">TableStyle</a></li><li><a href="global.html#TerriaViewer">TerriaViewer</a></li><li><a href="global.html#timeColumn">timeColumn</a></li><li><a href="global.html#triggerResize">triggerResize</a></li><li><a href="global.html#unionRectangleArray">unionRectangleArray</a></li><li><a href="global.html#unionRectangles">unionRectangles</a></li><li><a href="global.html#uniqueId">uniqueId</a></li><li><a href="global.html#up">up</a></li><li><a href="global.html#updateApplicationOnHashChange">updateApplicationOnHashChange</a></li><li><a href="global.html#updateFromJson">updateFromJson</a></li><li><a href="global.html#validDropClasses">validDropClasses</a></li><li><a href="global.html#validDropElements">validDropElements</a></li><li><a href="global.html#variableNameLeft">variableNameLeft</a></li><li><a href="global.html#variableNameTop">variableNameTop</a></li><li><a href="global.html#ViewerMode">ViewerMode</a></li><li><a href="global.html#width">width</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Feb 12 2016 15:08:05 GMT+1100 (AEDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

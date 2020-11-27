@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Models/CkanCatalogItem.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Models/CkanCatalogItem.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict';
+
+/*global require*/
+var ArcGisMapServerCatalogItem = require('./ArcGisMapServerCatalogItem');
+var CatalogItem = require('./CatalogItem');
+var clone = require('terriajs-cesium/Source/Core/clone');
+var createRegexDeserializer = require('./createRegexDeserializer');
+var createRegexSerializer = require('./createRegexSerializer');
+var CsvCatalogItem = require('./CsvCatalogItem');
+var CzmlCatalogItem = require('./CzmlCatalogItem');
+var defined = require('terriajs-cesium/Source/Core/defined');
+var defineProperties = require('terriajs-cesium/Source/Core/defineProperties');
+var freezeObject = require('terriajs-cesium/Source/Core/freezeObject');
+var GeoJsonCatalogItem = require('./GeoJsonCatalogItem');
+var inherit = require('../Core/inherit');
+var KmlCatalogItem = require('./KmlCatalogItem');
+var loadJson = require('terriajs-cesium/Source/Core/loadJson');
+var Metadata = require('./Metadata');
+var TerriaError = require('../Core/TerriaError');
+var proxyCatalogItemUrl = require('./proxyCatalogItemUrl');
+var Rectangle = require('terriajs-cesium/Source/Core/Rectangle');
+var URI = require('urijs');
+var WebMapServiceCatalogGroup = require('./WebMapServiceCatalogGroup');
+var WebMapServiceCatalogItem = require('./WebMapServiceCatalogItem');
+var when = require('terriajs-cesium/Source/ThirdParty/when');
+
+/**
+ * A {@link CatalogItem} that queries a CKAN server for a dataset or resource, and then accesses
+ * that resource as WMS, GeoJSON, etc. depending on what it finds.
+ *
+ * @alias CkanCatalogItem
+ * @constructor
+ * @extends CatalogItem
+ *
+ * @param {Terria} terria The Terria instance.
+ */
+function CkanCatalogItem(terria) {
+    CatalogItem.call(this, terria);
+
+    /**
+     * Gets or sets the ID of the CKAN resource referred to by this catalog item.  Either this property
+     * is {@see CkanCatalogItem#datasetId} must be specified.  If {@see CkanCatalogItem#datasetId} is
+     * specified too, and this resource is not found, _any_ supported resource may be used instead,
+     * depending on the value of {@see CkanCatalogItem#allowAnyResourceIfResourceIdNotFound}.
+     * @type {String}
+     */
+    this.resourceId = undefined;
+
+    /**
+     * Gets or sets the ID of the CKAN dataset referred to by this catalog item.  Either this property
+     * is {@see CkanCatalogItem#resourceId} must be specified.  The first resource of a supported type
+     * in this dataset will be used.
+     * @type {String}
+     */
+    this.datasetId = undefined;
+
+    /**
+     * Gets or sets a value indicating whether any supported resource may be used if both {@see CkanCatalogItem#datasetId} and
+     * {@see CkanCatalogItem#resourceId} are specified and the {@see CkanCatalogItem#resourceId} is not found.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowAnyResourceIfResourceIdNotFound = true;
+
+    /**
+     * Gets or sets a value indicating whether this may be a WMS resource.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowWms = true;
+
+    /**
+     * Gets or sets a regular expression that, when it matches a resource's format, indicates that the resource is a WMS resource.
+     * @type {RegExp}
+     */
+    this.wmsResourceFormat = /^wms$/i;
+
+    /**
+     * Gets or sets a value indicating whether this may be a KML resource.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowKml = true;
+
+    /**
+     * Gets or sets a regular expression that, when it matches a resource's format, indicates that the resource is a KML resource.
+     * @type {RegExp}
+     */
+    this.kmlResourceFormat = /^kml$/i;
+
+    /**
+     * Gets or sets a value indicating whether this may be a CSV resource.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowCsv = true;
+
+    /**
+     * Gets or sets a regular expression that, when it matches a resource's format, indicates that the resource is a CSV resource.
+     * @type {RegExp}
+     */
+    this.csvResourceFormat = /^csv-geo-/i;
+
+    /**
+     * Gets or sets a value indicating whether this may be an Esri MapServer resource.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowEsriMapServer = true;
+
+    /**
+     * Gets or sets a regular expression that, when it matches a resource's format, indicates that the resource is an Esri MapServer resource.
+     * @type {RegExp}
+     */
+    this.esriMapServerResourceFormat = /^esri rest$/i;
+
+    /**
+     * Gets or sets a value indicating whether this may be a GeoJSON resource.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowGeoJson = true;
+
+    /**
+     * Gets or sets a regular expression that, when it matches a resource's format, indicates that the resource is a GeoJSON resource.
+     * @type {RegExp}
+     */
+    this.geoJsonResourceFormat = /^geojson$/i;
+
+    /**
+     * Gets or sets a value indicating whether this may be a CZML resource.
+     * @type {Boolean}
+     * @default true
+     */
+    this.allowCzml = true;
+
+    /**
+     * Gets or sets a regular expression that, when it matches a resource's format, indicates that the resource is a CZML resource.
+     * @type {RegExp}
+     */
+    this.czmlResourceFormat = /^czml$/i;
+
+    /**
+     * Gets or sets a hash of properties that will be set on the item created from the CKAN resource.
+     * For example, { "treat404AsError": false }
+     * @type {Object}
+     */
+    this.itemProperties = undefined;
+}
+
+inherit(CatalogItem, CkanCatalogItem);
+
+defineProperties(CkanCatalogItem.prototype, {
+    /**
+     * Gets the type of data member represented by this instance.
+     * @memberOf CkanCatalogItem.prototype
+     * @type {String}
+     */
+    type : {
+        get : function() {
+            return 'ckan-resource';
+        }
+    },
+
+    /**
+     * Gets a human-readable name for this type of data source, 'CKAN Resource'.
+     * @memberOf CkanCatalogItem.prototype
+     * @type {String}
+     */
+    typeName : {
+        get : function() {
+            return 'CKAN Resource';
+        }
+    },
+
+    /**
+     * Gets the metadata associated with this data source and the server that provided it, if applicable.
+     * @memberOf CkanCatalogItem.prototype
+     * @type {Metadata}
+     */
+    metadata : {
+        get : function() {
+            var result = new Metadata();
+            result.isLoading = false;
+            result.dataSourceErrorMessage = 'This data source does not have any details available.';
+            result.serviceErrorMessage = 'This service does not have any details available.';
+            return result;
+        }
+    },
+
+    /**
+     * Gets the set of functions used to update individual properties in {@link CatalogMember#updateFromJson}.
+     * When a property name in the returned object literal matches the name of a property on this instance, the value
+     * will be called as a function and passed a reference to this instance, a reference to the source JSON object
+     * literal, and the name of the property.
+     * @memberOf CkanCatalogItem.prototype
+     * @type {Object}
+     */
+    updaters : {
+        get : function() {
+            return CkanCatalogItem.defaultUpdaters;
+        }
+    },
+
+    /**
+     * Gets the set of functions used to serialize individual properties in {@link CatalogMember#serializeToJson}.
+     * When a property name on the model matches the name of a property in the serializers object lieral,
+     * the value will be called as a function and passed a reference to the model, a reference to the destination
+     * JSON object literal, and the name of the property.
+     * @memberOf CkanCatalogItem.prototype
+     * @type {Object}
+     */
+    serializers : {
+        get : function() {
+            return CkanCatalogItem.defaultSerializers;
+        }
+    }
+});
+
+/**
+ * Gets or sets the set of default updater functions to use in {@link CatalogMember#updateFromJson}.  Types derived from this type
+ * should expose this instance - cloned and modified if necesary - through their {@link CatalogMember#updaters} property.
+ * @type {Object}
+ */
+CkanCatalogItem.defaultUpdaters = clone(CatalogItem.defaultUpdaters);
+
+CkanCatalogItem.defaultUpdaters.wmsResourceFormat = createRegexDeserializer('wmsResourceFormat');
+CkanCatalogItem.defaultUpdaters.kmlResourceFormat = createRegexDeserializer('kmlResourceFormat');
+CkanCatalogItem.defaultUpdaters.csvResourceFormat = createRegexDeserializer('csvResourceFormat');
+CkanCatalogItem.defaultUpdaters.esriMapServerResourceFormat = createRegexDeserializer('esriMapServerResourceFormat');
+CkanCatalogItem.defaultUpdaters.geoJsonResourceFormat = createRegexDeserializer('geoJsonResourceFormat');
+CkanCatalogItem.defaultUpdaters.czmlResourceFormat = createRegexDeserializer('czmlResourceFormat');
+
+freezeObject(CkanCatalogItem.defaultUpdaters);
+
+/**
+ * Gets or sets the set of default serializer functions to use in {@link CatalogMember#serializeToJson}.  Types derived from this type
+ * should expose this instance - cloned and modified if necesary - through their {@link CatalogMember#serializers} property.
+ * @type {Object}
+ */
+CkanCatalogItem.defaultSerializers = clone(CatalogItem.defaultSerializers);
+
+CkanCatalogItem.defaultSerializers.wmsResourceFormat = createRegexSerializer('wmsResourceFormat');
+CkanCatalogItem.defaultSerializers.kmlResourceFormat = createRegexSerializer('kmlResourceFormat');
+CkanCatalogItem.defaultSerializers.csvResourceFormat = createRegexSerializer('csvResourceFormat');
+CkanCatalogItem.defaultSerializers.esriMapServerResourceFormat = createRegexSerializer('esriMapServerResourceFormat');
+CkanCatalogItem.defaultSerializers.geoJsonResourceFormat = createRegexSerializer('geoJsonResourceFormat');
+CkanCatalogItem.defaultSerializers.czmlResourceFormat = createRegexSerializer('czmlResourceFormat');
+
+freezeObject(CkanCatalogItem.defaultSerializers);
+
+/**
+ * Creates a catalog item from a CKAN resource.
+ *
+ * @param {Terria} options.terria The Terria instance.
+ * @param {Object} options.resource The CKAN resource JSON.
+ * @param {Object} options.itemData The CKAN dataset JSON.
+ * @param {String} options.ckanBaseUrl The base URL of the CKAN server.
+ * @param {Object} [options.extras] The parsed version of `options.itemData`, if available.  If not provided, it will be parsed as needed.
+ * @param {String} [options.parent] The parent of this catalog item.
+ * @param {RegExp} [options.wmsResourceFormat] A regular expression that, when it matches a resource's format, indicates that the resource
+ *                                             is a WMS resource.  If undefined, WMS resources will not be returned.
+ * @param {RegExp} [options.esriMapServerResourceFormat] A regular expression that, when it matches a resource's format, indicates that the resource
+ *                                                       is an Esri MapServer resource.  If undefined, Esri MapServer resources will not be returned.
+ * @param {RegExp} [options.kmlResourceFormat] A regular expression that, when it matches a resource's format, indicates that the resource
+ *                                             is a KML resource.  If undefined, KML resources will not be returned.
+ * @param {RegExp} [options.geoJsonResourceFormat] A regular expression that, when it matches a resource's format, indicates that the resource
+ *                                                 is a GeoJSON resource.  If undefined, GeoJSON resources will not be returned.
+ * @param {RegExp} [options.csvResourceFormat] A regular expression that, when it matches a resource's format, indicates that the resource
+ *                                             is a CSV resource.  If undefined, CSV resources will not be returned.
+ * @param {RegExp} [options.czmlResourceFormat] A regular expression that, when it matches a resource's format, indicates that the resource
+ *                                              is a CZML resource.  If undefined, CZML resources will not be returned.
+ * @param {Boolean} [options.allowGroups=false] True to allow this function to return groups in addition to items.  For example if the resource
+ *                                              refers to a WMS server but no layer is available, a {@see WebMapServiceCatalogGroup} for the
+ *                                              server will be returned.
+ * @param {Boolean} [options.useResourceName=false] True to use the name of the resource for the name of the catalog item; false to use the
+ *                                                  name of the dataset.
+ * @param {String} [options.dataCustodian] The data custodian to use, overriding any that might be inferred from the CKAN dataset.
+ * @param {Object} [options.itemProperties] Additional properties to apply to the item once created.
+ * @return {CatalogMember} The created catalog member, or undefined if no catalog member could be created from the resource.
+ */
+CkanCatalogItem.createCatalogItemFromResource = function(options) {
+    var resource = options.resource;
+    var itemData = options.itemData;
+    var extras = options.extras;
+    var parent = options.parent;
+
+    if (resource.__filtered) {
+        return;
+    }
+
+    if (!defined(extras)) {
+        extras = {};
+        if (defined(itemData.extras)) {
+            for (var idx = 0; idx &lt; itemData.extras.length; idx++) {
+                extras[itemData.extras[idx].key] = itemData.extras[idx].value;
+            }
+        }
+    }
+
+    var formats = [
+        [options.wmsResourceFormat, WebMapServiceCatalogItem],
+        [options.esriMapServerResourceFormat, ArcGisMapServerCatalogItem],
+        [options.kmlResourceFormat, KmlCatalogItem],
+        [options.geoJsonResourceFormat, GeoJsonCatalogItem],
+        [options.czmlResourceFormat, CzmlCatalogItem],
+        [options.csvResourceFormat, CsvCatalogItem]
+    ].filter(function(format) {
+        return defined(format[0]);
+    });
+
+    var matchingFormats = formats.filter(function(format) { return resource.format.match(format[0]); });
+    if (matchingFormats.length === 0) {
+        return undefined;
+    }
+
+    var isWms = matchingFormats[0][1] === WebMapServiceCatalogItem;
+
+    var baseUrl = resource.wms_url;
+    if (!defined(baseUrl)) {
+        baseUrl = resource.url;
+        if (!defined(baseUrl)) {
+            return undefined;
+        }
+    }
+
+    // Extract the layer name from the URL.
+    var uri = new URI(baseUrl);
+    var params = uri.search(true);
+
+    // Remove the query portion of the WMS URL.
+    var url = baseUrl;
+
+    var newItem;
+    if (isWms) {
+        var layerName = resource.wms_layer || params.LAYERS || params.layers || params.typeName;
+        if (defined(layerName)) {
+            newItem = new WebMapServiceCatalogItem(options.terria);
+            newItem.layers = layerName;
+        } else {
+            if (!options.allowGroups) {
+                return undefined;
+            }
+            newItem = new WebMapServiceCatalogGroup(options.terria);
+        }
+        uri.search('');
+        url = uri.toString();
+    } else {
+        newItem = new matchingFormats[0][1](options.terria);
+    }
+    if (!newItem) {
+        return;
+    }
+
+    if (options.useResourceName) {
+        newItem.name = resource.name;
+    } else {
+        newItem.name = itemData.title;
+    }
+
+
+    if (itemData.notes) {
+        newItem.info.push({
+            name: 'Dataset Description',
+            content: itemData.notes
+        });
+
+        // Prevent a description - often the same one - from also coming from the WMS server.
+        newItem.info.push({
+            name: 'Data Description',
+            content: ''
+        });
+    }
+
+    if (defined(resource.description)) {
+        newItem.info.push({
+            name: 'Resource Description',
+            content: resource.description
+        });
+    }
+
+    if (defined(itemData.license_url)) {
+        newItem.info.push({
+            name: 'Licence',
+            content: '[' + (itemData.license_title || itemData.license_url) + '](' + itemData.license_url + ')'
+        });
+    } else if (defined(itemData.license_title)) {
+        newItem.info.push({
+            name: 'Licence',
+            content: itemData.license_title
+        });
+    }
+
+    newItem.url = url;
+
+    var bboxString = itemData.geo_coverage || extras.geo_coverage;
+    if (defined(bboxString)) {
+        var parts = bboxString.split(',');
+        if (parts.length === 4) {
+            newItem.rectangle = Rectangle.fromDegrees(parts[0], parts[1], parts[2], parts[3]);
+        }
+    }
+    newItem.dataUrl = options.ckanBaseUrl + '/dataset/' + itemData.name;
+    newItem.dataUrlType = 'direct';
+
+    if (defined(options.dataCustodian)) {
+        newItem.dataCustodian = options.dataCustodian;
+    } else if (itemData.organization &amp;&amp; itemData.organization.title) {
+        newItem.dataCustodian = itemData.organization.description || itemData.organization.title;
+    }
+
+    if (typeof(options.itemProperties) === 'object') {
+        newItem.updateFromJson(options.itemProperties);
+    }
+
+    if (defined(parent)) {
+        newItem.id = parent.uniqueId + '/' + resource.id;
+    }
+
+    return newItem;
+};
+
+CkanCatalogItem.prototype._load = function() {
+    var baseUri = new URI(this.url).segment('api/3/action');
+
+    if (!defined(this.resourceId) &amp;&amp; !defined(this.datasetId)) {
+        throw new TerriaError({
+            sender: this,
+            title: 'resourceId or datasetId must be specified',
+            message: 'CkanCatalogItem requires that either resourceId or datasetId be specified.'
+        });
+    }
+
+    var that = this;
+
+    var datasetIdPromise;
+
+    // If we don't know the dataset ID, query the resource for it.
+    if (defined(this.datasetId)) {
+        datasetIdPromise = when(this.datasetId);
+    } else {
+        var resourceUri = baseUri.clone().segment('resource_show').addQuery({ id: this.resourceId });
+        var resourceUrl = proxyCatalogItemUrl(this, resourceUri.toString(), '1d');
+        datasetIdPromise = loadJson(resourceUrl).then(function(resourceJson) {
+            if (!resourceJson.success) {
+                throw new TerriaError({
+                    sender: that,
+                    title: 'Error retrieving CKAN URL',
+                    message: 'Could not retrieve URL as JSON: ' + that.url + '.',
+                });
+            }
+
+            if (!defined(resourceJson.result) || !defined(resourceJson.result.package_id)) {
+                throw new TerriaError({
+                    sender: that,
+                    title: 'Invalid CKAN resource JSON',
+                    message: 'The resource returned from the CKAN server does not appear to have a package_id.',
+                });
+            }
+
+            return resourceJson.result.package_id;
+        });
+    }
+
+    return datasetIdPromise.then(function(datasetId) {
+        var datasetUri = baseUri.clone().segment('package_show').addQuery({ id: datasetId });
+        var datasetUrl = proxyCatalogItemUrl(this, datasetUri.toString(), '1d');
+
+        return loadJson(datasetUrl).then(function(json) {
+            if (!json.success) {
+                throw new TerriaError({
+                    sender: that,
+                    title: 'Error retrieving CKAN URL',
+                    message: 'Could not retrieve URL as JSON: ' + datasetUrl + '.',
+                });
+            }
+
+            var resources = json.result.resources;
+            var resourcesToConsider = resources;
+
+            // Prefer the specified resourceId, optionally allow any resourceId.
+            if (defined(that.resourceId)) {
+                resourcesToConsider = resources.filter(function(resource) {
+                    return resource.id === that.resourceId;
+                });
+
+                if (resourcesToConsider.length === 0 &amp;&amp; that.allowAnyResourceIfResourceIdNotFound) {
+                    resourcesToConsider = resources;
+                }
+            }
+
+            for (var i = 0; i &lt; resourcesToConsider.length; ++i) {
+                var catalogItem = CkanCatalogItem.createCatalogItemFromResource({
+                    terria: that.terria,
+                    resource: resourcesToConsider[i],
+                    itemData: json.result,
+                    ckanBaseUrl: that.url, // TODO
+                    wmsResourceFormat: that.allowWms ? that.wmsResourceFormat : undefined,
+                    kmlResourceFormat: that.allowKml ? that.kmlResourceFormat : undefined,
+                    csvResourceFormat: that.allowCsv ? that.csvResourceFormat : undefined,
+                    esriMapServerResourceFormat: that.allowEsriMapServer ? that.esriMapServerResourceFormat : undefined,
+                    geoJsonResourceFormat: that.allowGeoJson ? that.geoJsonResourceFormat : undefined,
+                    czmlResourceFormat: that.allowCzml ? that.czmlResourceFormat : undefined,
+                    dataCustodian: that.dataCustodian,
+                    itemProperties: that.itemProperties
+                });
+
+                if (defined(catalogItem)) {
+                    catalogItem.name = that.name;
+                    return catalogItem;
+                }
+            }
+
+            throw new TerriaError({
+                sender: that,
+                title: 'No compatible resources found',
+                message: defined(that.resourceId)
+                            ? 'The CKAN dataset does not have a resource with the ID ' + that.resourceId + ' or it does not have a supported format.'
+                            : 'The CKAN dataset does not have any resources with a supported format.'
+            });
+        });
+    });
+};
+
+module.exports = CkanCatalogItem;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbsCode.html">AbsCode</a></li><li><a href="AbsConcept.html">AbsConcept</a></li><li><a href="AbsDataset.html">AbsDataset</a></li><li><a href="AbsIttCatalogGroup.html">AbsIttCatalogGroup</a></li><li><a href="AbsIttCatalogItem.html">AbsIttCatalogItem</a></li><li><a href="ArcGisCatalogGroup.html">ArcGisCatalogGroup</a></li><li><a href="ArcGisMapServerCatalogItem.html">ArcGisMapServerCatalogItem</a></li><li><a href="BingMapsCatalogItem.html">BingMapsCatalogItem</a></li><li><a href="CameraView.html">CameraView</a></li><li><a href="Catalog.html">Catalog</a></li><li><a href="CatalogGroup.html">CatalogGroup</a></li><li><a href="CatalogItem.html">CatalogItem</a></li><li><a href="CatalogMember.html">CatalogMember</a></li><li><a href="CatalogMemberControl.html">CatalogMemberControl</a></li><li><a href="CatalogMemberDownloadControl.html">CatalogMemberDownloadControl</a></li><li><a href="Cesium.html">Cesium</a></li><li><a href="CkanCatalogGroup.html">CkanCatalogGroup</a></li><li><a href="CkanCatalogItem.html">CkanCatalogItem</a></li><li><a href="CompositeCatalogItem.html">CompositeCatalogItem</a></li><li><a href="Concept.html">Concept</a></li><li><a href="CsvCatalogItem.html">CsvCatalogItem</a></li><li><a href="CswCatalogGroup.html">CswCatalogGroup</a></li><li><a href="CzmlCatalogItem.html">CzmlCatalogItem</a></li><li><a href="DisplayVariablesConcept.html">DisplayVariablesConcept</a></li><li><a href="ExplorerPanelViewModel.html">ExplorerPanelViewModel</a></li><li><a href="FeatureInfoPanelSectionViewModel.html">FeatureInfoPanelSectionViewModel</a></li><li><a href="FeatureInfoPanelViewModel.html">FeatureInfoPanelViewModel</a></li><li><a href="GeoJsonCatalogItem.html">GeoJsonCatalogItem</a></li><li><a href="GlobeOrMap.html">GlobeOrMap</a></li><li><a href="GpxCatalogItem.html">GpxCatalogItem</a></li><li><a href="ImageryLayerCatalogItem.html">ImageryLayerCatalogItem</a></li><li><a href="KmlCatalogItem.html">KmlCatalogItem</a></li><li><a href="Leaflet.html">Leaflet</a></li><li><a href="LeafletGeomVisualizer.html">LeafletGeomVisualizer</a></li><li><a href="LegendHelper.html">LegendHelper</a></li><li><a href="LegendUrl.html">LegendUrl</a></li><li><a href="MapboxMapCatalogItem.html">MapboxMapCatalogItem</a></li><li><a href="MapProgressBarViewModel.html">MapProgressBarViewModel</a></li><li><a href="Metadata.html">Metadata</a></li><li><a href="MetadataItem.html">MetadataItem</a></li><li><a href="NavigationControl.html">NavigationControl</a></li><li><a href="OgrCatalogItem.html">OgrCatalogItem</a></li><li><a href="OpenStreetMapCatalogItem.html">OpenStreetMapCatalogItem</a></li><li><a href="RegionMapping.html">RegionMapping</a></li><li><a href="RegionProvider.html">RegionProvider</a></li><li><a href="RegionProviderList.html">RegionProviderList</a></li><li><a href="ResetViewNavigationControl.html">ResetViewNavigationControl</a></li><li><a href="SocrataCatalogGroup.html">SocrataCatalogGroup</a></li><li><a href="TableColumn.html">TableColumn</a></li><li><a href="TableDataSource.html">TableDataSource</a></li><li><a href="TableStructure.html">TableStructure</a></li><li><a href="Terria.html">Terria</a></li><li><a href="TerriaError.html">TerriaError</a></li><li><a href="TimeSeriesStack.html">TimeSeriesStack</a></li><li><a href="UrthecastCatalogGroup.html">UrthecastCatalogGroup</a></li><li><a href="UrthecastServerCatalogItem.html">UrthecastServerCatalogItem</a></li><li><a href="UserInterfaceControl.html">UserInterfaceControl</a></li><li><a href="VariableConcept.html">VariableConcept</a></li><li><a href="WebFeatureServiceCatalogGroup.html">WebFeatureServiceCatalogGroup</a></li><li><a href="WebFeatureServiceCatalogItem.html">WebFeatureServiceCatalogItem</a></li><li><a href="WebMapServiceCatalogGroup.html">WebMapServiceCatalogGroup</a></li><li><a href="WebMapServiceCatalogItem.html">WebMapServiceCatalogItem</a></li><li><a href="WebMapTileServiceCatalogGroup.html">WebMapTileServiceCatalogGroup</a></li><li><a href="WebMapTileServiceCatalogItem.html">WebMapTileServiceCatalogItem</a></li><li><a href="WfsFeaturesCatalogGroup.html">WfsFeaturesCatalogGroup</a></li><li><a href="ZoomInNavigationControl.html">ZoomInNavigationControl</a></li><li><a href="ZoomOutNavigationControl.html">ZoomOutNavigationControl</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-FeatureInfoTemplate.html">FeatureInfoTemplate</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addItem">addItem</a></li><li><a href="global.html#addUserCatalogMember">addUserCatalogMember</a></li><li><a href="global.html#allFeaturesAvailablePromise">allFeaturesAvailablePromise</a></li><li><a href="global.html#allowMultiple">allowMultiple</a></li><li><a href="global.html#allShareKeys">allShareKeys</a></li><li><a href="global.html#applyHintsToName">applyHintsToName</a></li><li><a href="global.html#applyReplacements">applyReplacements</a></li><li><a href="global.html#areColumnsEqualLength">areColumnsEqualLength</a></li><li><a href="global.html#barHeightMax">barHeightMax</a></li><li><a href="global.html#barHeightMin">barHeightMin</a></li><li><a href="global.html#barLeft">barLeft</a></li><li><a href="global.html#barTop">barTop</a></li><li><a href="global.html#buildBinColors">buildBinColors</a></li><li><a href="global.html#buildRowsFromColumns">buildRowsFromColumns</a></li><li><a href="global.html#buildTableColumns">buildTableColumns</a></li><li><a href="global.html#calculateAvailabilities">calculateAvailabilities</a></li><li><a href="global.html#calculateAvailability">calculateAvailability</a></li><li><a href="global.html#calculateRegionIndices">calculateRegionIndices</a></li><li><a href="global.html#calculateShow">calculateShow</a></li><li><a href="global.html#changedActiveItems">changedActiveItems</a></li><li><a href="global.html#checkBrowserCompatibility">checkBrowserCompatibility</a></li><li><a href="global.html#clampDisplayValue">clampDisplayValue</a></li><li><a href="global.html#colorArrayToColor">colorArrayToColor</a></li><li><a href="global.html#colorBinMethod">colorBinMethod</a></li><li><a href="global.html#colorBins">colorBins</a></li><li><a href="global.html#ColorMap">ColorMap</a></li><li><a href="global.html#combineFilters">combineFilters</a></li><li><a href="global.html#computeScreenSpacePosition">computeScreenSpacePosition</a></li><li><a href="global.html#containsAny">containsAny</a></li><li><a href="global.html#convertToDates">convertToDates</a></li><li><a href="global.html#createCatalogItemFromFileOrUrl">createCatalogItemFromFileOrUrl</a></li><li><a href="global.html#createCatalogItemFromUrl">createCatalogItemFromUrl</a></li><li><a href="global.html#createCatalogMemberFromType">createCatalogMemberFromType</a></li><li><a href="global.html#createClock">createClock</a></li><li><a href="global.html#createLeafletCredit">createLeafletCredit</a></li><li><a href="global.html#createRegexDeserializer">createRegexDeserializer</a></li><li><a href="global.html#createRegexSerializer">createRegexSerializer</a></li><li><a href="global.html#dataVariable">dataVariable</a></li><li><a href="global.html#deIndexWithDescendants">deIndexWithDescendants</a></li><li><a href="global.html#direction">direction</a></li><li><a href="global.html#DISPLAYABLE_MIME_TYPES">DISPLAYABLE_MIME_TYPES</a></li><li><a href="global.html#displayDuration">displayDuration</a></li><li><a href="global.html#drawGradient">drawGradient</a></li><li><a href="global.html#drawItemBoxes">drawItemBoxes</a></li><li><a href="global.html#drawItemLabels">drawItemLabels</a></li><li><a href="global.html#drawVariableName">drawVariableName</a></li><li><a href="global.html#EarthGravityModel1996">EarthGravityModel1996</a></li><li><a href="global.html#error">error</a></li><li><a href="global.html#extent">extent</a></li><li><a href="global.html#featureClicked">featureClicked</a></li><li><a href="global.html#featureInfoFields">featureInfoFields</a></li><li><a href="global.html#features">features</a></li><li><a href="global.html#findRegionIndex">findRegionIndex</a></li><li><a href="global.html#flattenCatalog">flattenCatalog</a></li><li><a href="global.html#formatNumberWithCommas">formatNumberWithCommas</a></li><li><a href="global.html#formatPropertyValue">formatPropertyValue</a></li><li><a href="global.html#generateCsvData">generateCsvData</a></li><li><a href="global.html#generateLegend">generateLegend</a></li><li><a href="global.html#getColumnsByType">getColumnsByType</a></li><li><a href="global.html#getFractionalValue">getFractionalValue</a></li><li><a href="global.html#getHumanReadableConceptName">getHumanReadableConceptName</a></li><li><a href="global.html#getParentIds">getParentIds</a></li><li><a href="global.html#getUniqueValues">getUniqueValues</a></li><li><a href="global.html#gmlToGeoJson">gmlToGeoJson</a></li><li><a href="global.html#gradientColorMap">gradientColorMap</a></li><li><a href="global.html#hasChildren">hasChildren</a></li><li><a href="global.html#hasLatitudeAndLongitude">hasLatitudeAndLongitude</a></li><li><a href="global.html#hasText">hasText</a></li><li><a href="global.html#imageUrl">imageUrl</a></li><li><a href="global.html#indexWithDescendants">indexWithDescendants</a></li><li><a href="global.html#invalidDropClasses">invalidDropClasses</a></li><li><a href="global.html#invalidDropElements">invalidDropElements</a></li><li><a href="global.html#isBrowserCompatible">isBrowserCompatible</a></li><li><a href="global.html#isCommonMobilePlatform">isCommonMobilePlatform</a></li><li><a href="global.html#isLoading">isLoading</a></li><li><a href="global.html#isOpen">isOpen</a></li><li><a href="global.html#isVisible">isVisible</a></li><li><a href="global.html#itemHeight">itemHeight</a></li><li><a href="global.html#itemHeightMin">itemHeightMin</a></li><li><a href="global.html#items">items</a></li><li><a href="global.html#itemSpacing">itemSpacing</a></li><li><a href="global.html#itemWidth">itemWidth</a></li><li><a href="global.html#itemY">itemY</a></li><li><a href="global.html#Legend">Legend</a></li><li><a href="global.html#legendTicks">legendTicks</a></li><li><a href="global.html#legendUrl">legendUrl</a></li><li><a href="global.html#loadConceptIdsAndConceptNameMap">loadConceptIdsAndConceptNameMap</a></li><li><a href="global.html#loadConcepts">loadConcepts</a></li><li><a href="global.html#loadDataFiles">loadDataFiles</a></li><li><a href="global.html#loadRegionsFromWfs">loadRegionsFromWfs</a></li><li><a href="global.html#longestTitle">longestTitle</a></li><li><a href="global.html#makeDataUri">makeDataUri</a></li><li><a href="global.html#map">map</a></li><li><a href="global.html#maxDisplayValue">maxDisplayValue</a></li><li><a href="global.html#minDisplayValue">minDisplayValue</a></li><li><a href="global.html#NowViewing">NowViewing</a></li><li><a href="global.html#nullColor">nullColor</a></li><li><a href="global.html#overrideProperty">overrideProperty</a></li><li><a href="global.html#PickedFeatures">PickedFeatures</a></li><li><a href="global.html#pickPosition">pickPosition</a></li><li><a href="global.html#position">position</a></li><li><a href="global.html#processRegionIds">processRegionIds</a></li><li><a href="global.html#Proj4Definitions">Proj4Definitions</a></li><li><a href="global.html#rectangle">rectangle</a></li><li><a href="global.html#rectangleToLatLngBounds">rectangleToLatLngBounds</a></li><li><a href="global.html#redisplayRegions">redisplayRegions</a></li><li><a href="global.html#regionDetails">regionDetails</a></li><li><a href="global.html#regionType">regionType</a></li><li><a href="global.html#regionVariable">regionVariable</a></li><li><a href="global.html#rememberRejections">rememberRejections</a></li><li><a href="global.html#replaceWithNullValues">replaceWithNullValues</a></li><li><a href="global.html#replaceWithZeroValues">replaceWithZeroValues</a></li><li><a href="global.html#scale">scale</a></li><li><a href="global.html#scaleByValue">scaleByValue</a></li><li><a href="global.html#selectBaseMap">selectBaseMap</a></li><li><a href="global.html#serializeToJson">serializeToJson</a></li><li><a href="global.html#setNewRegionImageryLayer">setNewRegionImageryLayer</a></li><li><a href="global.html#shareKeyIndex">shareKeyIndex</a></li><li><a href="global.html#SharePopupViewModel">SharePopupViewModel</a></li><li><a href="global.html#shouldBeUpdated">shouldBeUpdated</a></li><li><a href="global.html#showSelection">showSelection</a></li><li><a href="global.html#simpleArrayToArray">simpleArrayToArray</a></li><li><a href="global.html#stringToArray">stringToArray</a></li><li><a href="global.html#supportsIntervals">supportsIntervals</a></li><li><a href="global.html#supportsWebGL">supportsWebGL</a></li><li><a href="global.html#TableStyle">TableStyle</a></li><li><a href="global.html#TerriaViewer">TerriaViewer</a></li><li><a href="global.html#timeColumn">timeColumn</a></li><li><a href="global.html#triggerResize">triggerResize</a></li><li><a href="global.html#unionRectangleArray">unionRectangleArray</a></li><li><a href="global.html#unionRectangles">unionRectangles</a></li><li><a href="global.html#uniqueId">uniqueId</a></li><li><a href="global.html#up">up</a></li><li><a href="global.html#updateApplicationOnHashChange">updateApplicationOnHashChange</a></li><li><a href="global.html#updateFromJson">updateFromJson</a></li><li><a href="global.html#validDropClasses">validDropClasses</a></li><li><a href="global.html#validDropElements">validDropElements</a></li><li><a href="global.html#variableNameLeft">variableNameLeft</a></li><li><a href="global.html#variableNameTop">variableNameTop</a></li><li><a href="global.html#ViewerMode">ViewerMode</a></li><li><a href="global.html#width">width</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Feb 12 2016 15:08:05 GMT+1100 (AEDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
