@@ -1,6 +1,6 @@
 {
- "name": "NationalMap",
- "start_url": "index.html",
+ "name": "USGS NationalMap",
+ "start_url": "/",
  "display": "standalone",
  "icons": [
   {
