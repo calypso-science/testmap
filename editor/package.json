@@ -1,0 +1,76 @@
+{
+  "_args": [
+    [
+      "terriajs-catalog-editor@^0.2.0",
+      "/Users/stevebennett/odev/nicta/nationalmap/map"
+    ]
+  ],
+  "_from": "terriajs-catalog-editor@>=0.2.0 <0.3.0",
+  "_id": "terriajs-catalog-editor@0.2.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/terriajs-catalog-editor",
+  "_nodeVersion": "0.12.0",
+  "_npmUser": {
+    "email": "stevage@gmail.com",
+    "name": "stevage"
+  },
+  "_npmVersion": "3.5.3",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "terriajs-catalog-editor",
+    "raw": "terriajs-catalog-editor@^0.2.0",
+    "rawSpec": "^0.2.0",
+    "scope": null,
+    "spec": ">=0.2.0 <0.3.0",
+    "type": "range"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npmjs.org/terriajs-catalog-editor/-/terriajs-catalog-editor-0.2.0.tgz",
+  "_shasum": "d9c6679e53c4d92e87a531af896c6148888ed8e4",
+  "_shrinkwrap": null,
+  "_spec": "terriajs-catalog-editor@^0.2.0",
+  "_where": "/Users/stevebennett/odev/nicta/nationalmap/map",
+  "author": {
+    "email": "http://stevebennett.me",
+    "name": "Steve Bennett"
+  },
+  "bugs": {
+    "url": "https://github.com/TerriaJS/catalog-editor/issues"
+  },
+  "dependencies": {},
+  "description": "Web-based, JSON-schema-driven editor for TerriaJS catalogs.",
+  "devDependencies": {},
+  "directories": {},
+  "dist": {
+    "shasum": "d9c6679e53c4d92e87a531af896c6148888ed8e4",
+    "tarball": "http://registry.npmjs.org/terriajs-catalog-editor/-/terriajs-catalog-editor-0.2.0.tgz"
+  },
+  "gitHead": "7a7b4113276ad99addd32268e904b2341e719756",
+  "homepage": "https://github.com/TerriaJS/catalog-editor#readme",
+  "license": "Apache-2.0",
+  "main": "datasourceeditor.js",
+  "maintainers": [
+    {
+      "email": "stevage@gmail.com",
+      "name": "stevage"
+    },
+    {
+      "email": "terriajs@lists.nicta.com.au",
+      "name": "terria"
+    }
+  ],
+  "name": "terriajs-catalog-editor",
+  "optionalDependencies": {},
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TerriaJS/catalog-editor.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.2.0"
+}
