@@ -1,17 +1,4 @@
-
 {
-    "corsDomains": [
-        "corsproxy.com",
-        "programs.communications.gov.au",
-        "www.asris.csiro.au",
-        "mapsengine.google.com"
-    ],
-    "homeCamera": {
-        "west": -124,
-        "south": 24,
-        "east": -66,
-        "north": 50
-    },
   "catalog": [
     {
       "name": "Test Data",
@@ -496,13 +483,7 @@
     },
     {
       "name": "Empty Group",
-      "type": "group",
-      "items": [
-            {
-              "name": "Test remy (CZML)",
-              "type": "czml",
-              "url": "test/remy.czml"
-            }]
+      "type": "group"
     }
   ]
 }
