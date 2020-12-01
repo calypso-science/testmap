@@ -26,14 +26,16 @@
            //enableOnLocalhost: false // If false, don't show this when running on localhost
         //},  
         developerAttribution: {
-            text: "U.S. Geological Survey",
-            link: "http://www.usgs.gov"
+            text: "Calypso Science",
+            link: "http://calypso.science"
         },
         appName: "USGS Terria Map",
         brandBarElements: [
-            "<table cellspacing=\"20\"><tr><td style=\"padding-right:18px\"> <a target=\"_blank\" href=\"https://www.usgs.gov/\"><img vertical-align=\"middle\"  src=\"https://github.com/zdefne-usgs/TerriaMap/blob/master/wwwroot/images/USGS_brand_logo_small.png?raw=true\" style=\"height:42;border:0\" title=\"U.S. Geological Survey\" /></a></td></tr></table>"
+            "",
+            "<a target=\"_blank\" href=\"https://calypso.science\"><img src=\"images/calypso.png\" height=\"52\" title=\"Version: {{version}}\" /></a>",
+            ""
         ],
-        supportEmail: "zdefne@usgs.gov",
+        supportEmail: "r.zyngfogel@calypso.science",
         proj4ServiceBaseUrl: "proj4def/",
         //feedbackUrl: "feedback",
     }
