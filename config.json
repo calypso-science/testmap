@@ -1,6 +1,6 @@
 {
     initializationUrls: [
-        "usgs",
+        "test",
     ],
     parameters: {
         disableSplitter: false,
