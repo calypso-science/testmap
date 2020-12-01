@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogGroup representing a collection of layers from a Web Map Service (WMS) server.",
-  "title": "Web Map Service (WMS) Server",
+  "title": "WebMapService",
   "allOf": [
     {
       "$ref": "CatalogGroup.json"

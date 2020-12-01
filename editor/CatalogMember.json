@@ -53,7 +53,7 @@
     "infoSectionOrder": {
       "type": "array",
       "title": "Info section order",
-      "description": "The array of section titles definining the display order of info sections.  If this property\nis not defined, CatalogItemInfoViewModel.infoSectionOrder is used.",
+      "description": "The array of section titles definining the display order of info sections.  If this property\nis not defined, DataPreviewSections's DEFAULT_SECTION_ORDER is used.",
       "format": "tabs",
       "items": {
         "type": "string"
@@ -112,11 +112,10 @@
         "type": "string"
       }
     },
-    "isLoading": {
-      "type": "boolean",
-      "title": "Is loading",
-      "description": "A value indicating whether this data source is currently loading.",
-      "format": "checkbox"
+    "shortReport": {
+      "type": "string",
+      "title": "Short report",
+      "description": "A short report to show on the now viewing tab."
     },
     "isWaitingForDisclaimer": {
       "type": "boolean",
@@ -129,6 +128,11 @@
       "title": "Hide source",
       "description": "Indicates that the source of this data should be hidden from the UI (obviously this isn't super-secure as you\ncan just look at the network requests).",
       "format": "checkbox"
+    },
+    "nameInCatalog": {
+      "type": "string",
+      "title": "Name in catalog",
+      "description": "The name of this catalog member in the catalog. By default this is just `name`, but can be overridden."
     }
   }
 }

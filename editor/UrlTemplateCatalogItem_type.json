@@ -12,7 +12,7 @@
     }
   },
   "description": "A ImageryLayerCatalogItem representing a layer from a mapping server that can be reached\nvia a URL template.",
-  "title": "URL Template Map Server",
+  "title": "UrlTemplate",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

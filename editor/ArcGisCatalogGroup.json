@@ -9,7 +9,7 @@
     "url": {
       "type": "string",
       "title": "URL",
-      "description": "The URL of the Map Service."
+      "description": "The URL of the services."
     },
     "dataCustodian": {
       "type": "string",

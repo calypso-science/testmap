@@ -19,7 +19,7 @@
     "parameters": {
       "type": "object",
       "title": "Parameters",
-      "description": "The additional parameters to pass to the WMTS server when requesting images.\nIf this property is undefiend, WebMapTileServiceCatalogItem.defaultParameters is used."
+      "description": "The additional parameters to pass to the WMTS server when requesting images.\nAll parameter names must be entered in lowercase in order to be consistent with references in TerrisJS code.\nIf this property is undefiend, WebMapTileServiceCatalogItem.defaultParameters is used."
     },
     "blacklist": {
       "type": "object",

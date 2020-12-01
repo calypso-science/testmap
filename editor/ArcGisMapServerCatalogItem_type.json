@@ -12,7 +12,7 @@
     }
   },
   "description": "A ImageryLayerCatalogItem representing a layer from an Esri ArcGIS MapServer.",
-  "title": "Esri ArcGIS MapServer",
+  "title": "ArcGisMapServer",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

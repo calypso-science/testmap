@@ -76,7 +76,7 @@
       "$ref": "CatalogItem.json"
     },
     {
-      "$ref": "CsvCatalogItem.json"
+      "$ref": "TableCatalogItem.json"
     },
     {
       "$ref": "CatalogMember.json"

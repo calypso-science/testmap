@@ -12,7 +12,7 @@
     }
   },
   "description": "A ImageryLayerCatalogItem representing a layer from the Open Street Map server.",
-  "title": "Open Street Map",
+  "title": "OpenStreetMap",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

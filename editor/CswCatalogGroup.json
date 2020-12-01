@@ -50,6 +50,17 @@
       "type": "object",
       "title": "Domain specification",
       "description": "A description of a domain that will be pulled from the CSW service and used to define the metadataGroups. The domain is obtained by querying the CSW server for a particular property - the values of the property form the domain, the values are assumed to define a hierarchy eg. Wave Models | Wave Energy Flux - which is a two level hierarchy of groups that will be used to classify metadata records."
+    },
+    "includeWps": {
+      "type": "boolean",
+      "title": "Include wps",
+      "description": "True to allow OGC:WPS service resources to be added to the catalog; otherwise, false.",
+      "format": "checkbox"
+    },
+    "itemProperties": {
+      "type": "object",
+      "title": "Item properties",
+      "description": "A hash of properties that will be set on the item created from the CKAN resource.\nFor example, { \"treat404AsError\": false }"
     }
   },
   "allOf": [

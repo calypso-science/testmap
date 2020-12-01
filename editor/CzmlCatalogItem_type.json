@@ -12,10 +12,13 @@
     }
   },
   "description": "A CatalogItem representing Cesium Language (CZML) data.",
-  "title": "Cesium Language (CZML)",
+  "title": "Czml",
   "allOf": [
     {
       "$ref": "CatalogItem.json"
+    },
+    {
+      "$ref": "DataSourceCatalogItem.json"
     },
     {
       "$ref": "CatalogMember.json"

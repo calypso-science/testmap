@@ -12,7 +12,7 @@
     }
   },
   "description": "A ImageryLayerCatalogItem representing a layer from a Web Map Tile Service (WMTS) server.",
-  "title": "Web Map Tile Service (WMTS)",
+  "title": "WebMapTileService",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

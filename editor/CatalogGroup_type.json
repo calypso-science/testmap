@@ -15,7 +15,7 @@
     }
   },
   "description": "A group of data items and other groups in the Catalog.  A group can contain\nCatalogMembers or other\nCatalogGroups.",
-  "title": "Group",
+  "title": "",
   "allOf": [
     {
       "$ref": "CatalogMember.json"

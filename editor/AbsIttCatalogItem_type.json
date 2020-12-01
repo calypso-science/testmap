@@ -12,13 +12,13 @@
     }
   },
   "description": "A CatalogItem representing region-mapped data obtained from the Australia Bureau of Statistics\n(ABS) ITT query interface.  Documentation for the query interface is found here: http://stat.abs.gov.au/itt/r.jsp?api",
-  "title": "ABS.Stat",
+  "title": "AbsItt",
   "allOf": [
     {
       "$ref": "CatalogItem.json"
     },
     {
-      "$ref": "CsvCatalogItem.json"
+      "$ref": "TableCatalogItem.json"
     },
     {
       "$ref": "CatalogMember.json"

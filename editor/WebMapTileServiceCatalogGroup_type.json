@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogGroup representing a collection of layers from a Web Map Tile Service (WMTS) server.",
-  "title": "Web Map Tile Service (WMTS) Server",
+  "title": "WebMapTileService",
   "allOf": [
     {
       "$ref": "CatalogGroup.json"

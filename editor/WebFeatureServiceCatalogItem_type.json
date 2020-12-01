@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogItem representing a layer from a Web Feature Service (WFS) server.",
-  "title": "Web Feature Service (WFS)",
+  "title": "WebFeatureService",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

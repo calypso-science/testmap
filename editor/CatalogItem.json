@@ -6,6 +6,11 @@
     "url"
   ],
   "properties": {
+    "nowViewingIndex": {
+      "type": "number",
+      "title": "Now viewing index",
+      "description": "The index of the item in the Now Viewing list.  Setting this property does not automatically change the order.\nThis property is used intenally to save/restore the Now Viewing order and is not intended for general use."
+    },
     "rectangle": {
       "type": "array",
       "title": "Rectangle",
@@ -23,11 +28,6 @@
       },
       "maxItems": 4,
       "minItems": 2
-    },
-    "legendUrl": {
-      "type": "string",
-      "title": "Legend URL",
-      "description": "The URL of the legend for this data item, or undefined if this data item does not have a legend."
     },
     "url": {
       "type": "string",
@@ -62,16 +62,22 @@
       "description": "A value indicating whether the legend for this data item is currently visible.",
       "format": "checkbox"
     },
-    "isEnableable": {
+    "displayChoicesBeforeLegend": {
       "type": "boolean",
-      "title": "Is enableable",
-      "description": "A value indicating whether this data source can be enabled via a checkbox in the Data Catalog Tab.",
+      "title": "Display choices before legend",
+      "description": "A flag which determines whether the legend comes before (false) or after (true) the display variable choice.\nDefault false.",
+      "format": "checkbox"
+    },
+    "isLoading": {
+      "type": "boolean",
+      "title": "Is loading",
+      "description": "A value indicating whether this data source is currently loading.",
       "format": "checkbox"
     },
     "isMappable": {
       "type": "boolean",
       "title": "Is mappable",
-      "description": "A value indicating whether this data source is mappable and should therefore include a Zoom To button.",
+      "description": "A value indicating whether this data source can be shown on the map (as opposed to a time-series dataset,\nfor instance, which can only be shown in a chart).",
       "format": "checkbox"
     },
     "showsInfo": {
@@ -96,7 +102,34 @@
     "maximumShownFeatureInfos": {
       "type": "number",
       "title": "Maximum shown feature infos",
-      "description": "The maximum number of features whose information can be shown at one time in the FeatureInfoPanelViewModel, from this item.\nDefaults to terria.configParameters.defaultMaximumShownFeatureInfos"
+      "description": "The maximum number of features whose information can be shown at one time in the Feature Info Panel, from this item.\nDefaults to terria.configParameters.defaultMaximumShownFeatureInfos"
+    },
+    "zoomOnEnable": {
+      "type": "boolean",
+      "title": "Zoom on enable",
+      "description": "A value indicating whether the map will automatically zoom to this catalog item when it is enabled.\n\nNote that within a single init source:\n\n* Catalog items with both `isEnabled` and `zoomOnEnable` set to true will override the top-level `initialCamera` property.\n* If multiple catalog items have both `isEnabled` and `zoomOnEnable` set to true, it is undefined which one will affect the camera.\n\nIn the case of multiple init sources, however, the camera will reflect whatever happens in the _last_ init source, whether\nit is a result of a `zoomOnEnable` or an `initialCamera`,",
+      "format": "checkbox"
+    },
+    "dateFormat": {
+      "type": "object",
+      "title": "Date format",
+      "description": "Options for formatting current time and timeline tic labels. Options are:\n   currentTime   // Current time in time slider will be shown in this format. For example \"mmmm yyyy\" for Jan 2016.\n   timelineTic   // Timeline tics will have this label. For example \"yyyy\" will cause each tic to be labelled with the year."
+    },
+    "useOwnClock": {
+      "type": "boolean",
+      "title": "Use own clock",
+      "description": "A flag indicating whether imagery should be displayed using this item's own clock (currentTime, multiplier),\nor, if false, the terria clock (whose current time is shown in the timeline UI). Default false.",
+      "format": "checkbox"
+    },
+    "legendUrls": {
+      "type": "string",
+      "title": "Legend urls",
+      "description": "The URLs of the legends to show when this catalog item is enabled."
+    },
+    "legendUrl": {
+      "type": "string",
+      "title": "Legend URL",
+      "description": "The URL of the legend to show when this catalog item is enabled.  If there is more than one\nlegend URL, this property returns the first one."
     },
     "dataUrl": {
       "type": "string",

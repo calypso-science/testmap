@@ -7,12 +7,12 @@
       },
       "type": "string",
       "enum": [
-        "esri-mapServer-group"
+        "esri-group"
       ]
     }
   },
-  "description": "A CatalogGroup representing a collection of layers from an ArcGIS Map Service.",
-  "title": "ArcGIS Map Service Group",
+  "description": "A CatalogGroup representing a collection of ArcGIS Services,\neg. http://www.ga.gov.au/gis/rest/services/",
+  "title": "ArcGis",
   "allOf": [
     {
       "$ref": "CatalogGroup.json"

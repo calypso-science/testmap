@@ -12,10 +12,13 @@
     }
   },
   "description": "A CatalogItem representing CSV data.",
-  "title": "Comma-Separated Values (CSV)",
+  "title": "Csv",
   "allOf": [
     {
       "$ref": "CatalogItem.json"
+    },
+    {
+      "$ref": "TableCatalogItem.json"
     },
     {
       "$ref": "CatalogMember.json"

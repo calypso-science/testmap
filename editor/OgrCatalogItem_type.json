@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogItem representing ogr2ogr supported data formats.",
-  "title": "Unknown / Converted to GeoJSON",
+  "title": "Ogr",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogItem that queries a CKAN server for a resource, and then accesses\nthat resource as WMS, GeoJSON, etc. depending on what it finds.",
-  "title": "CKAN Resource",
+  "title": "Ckan",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

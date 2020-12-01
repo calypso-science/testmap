@@ -11,7 +11,7 @@
       ]
     }
   },
-  "title": "Mapbox Map",
+  "title": "MapboxMap",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

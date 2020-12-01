@@ -28,6 +28,12 @@
       "description": "A value indicating whether this may be a WMS resource.",
       "format": "checkbox"
     },
+    "allowWfs": {
+      "type": "boolean",
+      "title": "Allow WFS",
+      "description": "A value indicating whether this may be a WFS resource.",
+      "format": "checkbox"
+    },
     "allowKml": {
       "type": "boolean",
       "title": "Allow KML",
@@ -44,6 +50,12 @@
       "type": "boolean",
       "title": "Allow esri map server",
       "description": "A value indicating whether this may be an Esri MapServer resource.",
+      "format": "checkbox"
+    },
+    "allowEsriFeatureServer": {
+      "type": "boolean",
+      "title": "Allow esri feature server",
+      "description": "A value indicating whether this may be an Esri FeatureServer resource.",
       "format": "checkbox"
     },
     "allowGeoJson": {

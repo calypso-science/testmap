@@ -17,14 +17,12 @@
       "description": "A description of the custodian of the data sources in this group.\nThis property is an HTML string that must be sanitized before display to the user."
     },
     "filterQuery": {
-      "type": "array",
+      "type": [
+        "array",
+        "array"
+      ],
       "title": "Filter query",
-      "description": "The filter query to pass to CKAN when querying the available data sources and their groups.  Each string in the\narray causes an independent request to the CKAN, and the results are concatenated.  The\nsearch string is equivalent to what would be in the parameters segment of the url calling the CKAN search api.\nSee the [Solr documentation](http://wiki.apache.org/solr/CommonQueryParameters#fq) for information about filter queries.\n  To get all the datasets with wms resources the query array would be ['fq=res_format%3awms']\n  To get all the datasets in the Surface Water group it would be ['q=groups%3dSurface%20Water&fq=res_format%3aWMS']\n  And to get both wms and esri-mapService datasets it would be ['q=res_format:WMS', 'q=res_format:%22Esri%20REST%22' ]\n  To get all datasets with no filter, you can use ['']\nThis property is required.",
-      "format": "tabs",
-      "items": {
-        "type": "string",
-        "title": "Filter"
-      }
+      "description": "The filter query to pass to CKAN when querying the available data sources and their groups. Each item in the\narray causes an independent request to the CKAN, and the results are concatenated.  The\nsearch string is equivalent to what would be in the parameters segment of the url calling the CKAN search api.\nSee the [Solr documentation](http://wiki.apache.org/solr/CommonQueryParameters#fq) for information about filter queries.\nEach item can be either a URL-encoded string (\"fq=res_format%3awms\") or an object ({ fq: 'res_format:wms' }). The latter\nformat is easier to work with.\n  To get all the datasets with wms resources: [{ fq: 'res_format%3awms' }]\n  To get all wms/WMS datasets in the Surface Water group: [{q: 'groups=Surface Water', fq: 'res_format:WMS' }]\n  To get both wms and esri-mapService datasets: [{q: 'res_format:WMS'}, {q: 'res_format:\"Esri REST\"' }]\n  To get all datasets with no filter, you can use ['']\nThis property is required."
     },
     "blacklist": {
       "type": "object",
@@ -56,10 +54,21 @@
       "title": "Group by",
       "description": "A value indicating how datasets should be grouped.  Valid values are:\n* `none` - Datasets are put in a flat list; they are not grouped at all.\n* `group` - Datasets are grouped according to their CKAN group.  Datasets that are not in any groups are put at the top level.\n* `organization` - Datasets are grouped by their CKAN organization.  Datasets that are not associated with an organization are put at the top level."
     },
+    "ungroupedTitle": {
+      "type": "string",
+      "title": "Ungrouped title",
+      "description": "A title for the group holding all items that don't have a group in CKAN. If the value is a blank string or undefined,\nthese items will be left at the top level, not grouped."
+    },
     "useResourceName": {
       "type": "boolean",
       "title": "Use resource name",
       "description": "A value indicating whether each catalog item's name should be populated from\nindividual resources instead of from the CKAN dataset.",
+      "format": "checkbox"
+    },
+    "useCombinationNameWhereMultipleResources": {
+      "type": "boolean",
+      "title": "Use combination name where multiple resources",
+      "description": "A value indicating whether each catalog item's name should be populated from\nindividual resources and the CKAN dataset where the are multiple resources for a single dataset.",
       "format": "checkbox"
     },
     "allowEntireWmsServers": {
@@ -68,10 +77,22 @@
       "description": "True to allow entire WMS servers (that is, WMS resources without a clearly-defined layer) to be\nadded to the catalog; otherwise, false.",
       "format": "checkbox"
     },
+    "allowEntireWfsServers": {
+      "type": "boolean",
+      "title": "Allow entire WFS servers",
+      "description": "True to allow entire WFS servers (that is, WFS resources without a clearly-defined layer) to be\nadded to the catalog; otherwise, false.",
+      "format": "checkbox"
+    },
     "includeWms": {
       "type": "boolean",
       "title": "Include WMS",
       "description": "True to allow WMS resources to be added to the catalog; otherwise, false.",
+      "format": "checkbox"
+    },
+    "includeWfs": {
+      "type": "boolean",
+      "title": "Include WFS",
+      "description": "True to allow WFS resources to be added to the catalog; otherwise, false.",
       "format": "checkbox"
     },
     "includeKml": {
@@ -89,7 +110,13 @@
     "includeEsriMapServer": {
       "type": "boolean",
       "title": "Include esri map server",
-      "description": "True to allow ESRI Map resources to be added to the catalog; otherwise, false.",
+      "description": "True to allow ESRI MapServer resources to be added to the catalog; otherwise, false.",
+      "format": "checkbox"
+    },
+    "includeEsriFeatureServer": {
+      "type": "boolean",
+      "title": "Include esri feature server",
+      "description": "True to allow ESRI FeatureServer resources to be added to the catalog; otherwise, false.",
       "format": "checkbox"
     },
     "includeGeoJson": {

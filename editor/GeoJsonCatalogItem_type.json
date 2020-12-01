@@ -12,10 +12,13 @@
     }
   },
   "description": "A CatalogItem representing GeoJSON feature data.",
-  "title": "GeoJSON",
+  "title": "GeoJson",
   "allOf": [
     {
       "$ref": "CatalogItem.json"
+    },
+    {
+      "$ref": "DataSourceCatalogItem.json"
     },
     {
       "$ref": "CatalogMember.json"

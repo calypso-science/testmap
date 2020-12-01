@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogGroup representing a collection of layers from a [CKAN](http://ckan.org) server.",
-  "title": "CKAN Server",
+  "title": "Ckan",
   "allOf": [
     {
       "$ref": "CatalogGroup.json"

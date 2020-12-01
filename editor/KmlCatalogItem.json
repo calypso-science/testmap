@@ -17,6 +17,9 @@
       "$ref": "CatalogItem.json"
     },
     {
+      "$ref": "DataSourceCatalogItem.json"
+    },
+    {
       "$ref": "CatalogMember.json"
     }
   ]

@@ -12,7 +12,7 @@
     }
   },
   "description": "A ImageryLayerCatalogItem representing a layer from the Bing Maps server.",
-  "title": "Bing Maps",
+  "title": "BingMaps",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogGroup representing a collection of datasets queried from an OGC Catalog Service (CSW) server.",
-  "title": "Catalogue Service (CSW)",
+  "title": "Csw",
   "allOf": [
     {
       "$ref": "CatalogGroup.json"

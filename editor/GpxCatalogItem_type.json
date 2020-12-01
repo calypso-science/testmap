@@ -12,7 +12,7 @@
     }
   },
   "description": "A CatalogItem representing GPX data.",
-  "title": "GPX",
+  "title": "Gpx",
   "allOf": [
     {
       "$ref": "CatalogItem.json"

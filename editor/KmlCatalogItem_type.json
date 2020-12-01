@@ -12,10 +12,13 @@
     }
   },
   "description": "A CatalogItem representing KML or KMZ feature data.",
-  "title": "KML or KMZ",
+  "title": "Kml",
   "allOf": [
     {
       "$ref": "CatalogItem.json"
+    },
+    {
+      "$ref": "DataSourceCatalogItem.json"
     },
     {
       "$ref": "CatalogMember.json"
