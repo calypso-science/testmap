@@ -483,7 +483,13 @@
     },
     {
       "name": "Empty Group",
-      "type": "group"
+      "type": "group",
+      "items": [
+            {
+              "name": "Test remy (CZML)",
+              "type": "czml",
+              "url": "test/remy.czml"
+            }]
     }
   ]
 }
