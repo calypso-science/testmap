@@ -1,0 +1,62 @@
+{
+  "catalog": [
+    {
+      "name": "Test Data",
+      "type": "group",
+      "items": [
+        {
+          "name": "Temporal",
+          "type": "group",
+          "isEnabled":true,
+          "items": [
+            {
+              "name": "Tidal current",
+              "type": "csv",
+              "url": "test/current.csv",
+              "isEnabled":true,
+              "isLegendVisible": false,
+              "isShown":false,
+              "tableStyle": {
+                "colorMap": [
+                  {
+                    "color": "rgba(0,0,200,1.0)",
+                    "offset": 0
+                  },
+                  {
+                    "color": "rgba(200,200,200,1.00)",
+                    "offset": 0.5
+                  },
+                  {
+                    "color": "rgba(200,0,0,1.00)",
+                    "offset": 1
+                  }
+                ],
+                "dataVariable": "speed",
+                "scale": 1.0,
+                "scaleByValue": true,
+                "imageUrl": "test/images/arrow32.png",
+                "minDisplayValue": 0,
+                "maxDisplayValue": 10,
+                "legendTicks": 4,
+                "featureInfoFields": {
+                  "current_date": "date",
+                  "incident_severity": "speed"
+                }
+              }
+            }
+          ]
+        },
+      ],
+      "isOpen": true,
+    },
+  ],
+  "workbench": [
+    "caca"
+  ],
+  "homeCamera": {
+    "north": -30,
+    "east": 179,
+    "south": -47,
+    "west": 165
+  },
+}
