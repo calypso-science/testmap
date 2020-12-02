@@ -7,7 +7,6 @@
         {
           "name": "Temporal",
           "type": "group",
-          "isEnabled":true,
           "items": [
             {
               "name": "Pacific Earthquakes (CSV)",
@@ -21,12 +20,15 @@
               },
               "displayDuration": 2880,
               "isEnabled":true,
+              "isLegendVisible": false,
               "isShown":false
             },
             {
               "name": "Auto Incidents (CSV)",
               "type": "csv",
               "url": "test/incidents.csv",
+              "isEnabled":true,
+              "isLegendVisible": false,
               "tableStyle": {
                 "colorMap": [
                   {
@@ -96,9 +98,6 @@
         },
       ],
       "isOpen": true,
-      "isEnabled":true,
-      "isShown":false,
-      "isLegendVisible":false
     },
   ],
   "workbench": [
