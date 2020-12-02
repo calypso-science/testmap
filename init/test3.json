@@ -10,24 +10,9 @@
           "isEnabled":true,
           "items": [
             {
-              "name": "Pacific Earthquakes (CSV)",
+              "name": "Tidal current",
               "type": "csv",
-              "id"  : "caca",
-              "url": "test/earthquakes.csv",
-              "disableUserChanges": true,
-              "tableStyle": {
-                "dataVariable": "Magnitude",
-                "scaleByValue": true
-              },
-              "displayDuration": 2880,
-              "isEnabled":true,
-              "isLegendVisible": false,
-              "isShown":false
-            },
-            {
-              "name": "Auto Incidents (CSV)",
-              "type": "csv",
-              "url": "test/incidents.csv",
+              "url": "test/current.csv",
               "isEnabled":true,
               "isLegendVisible": false,
               "isShown":false,
@@ -46,16 +31,16 @@
                     "offset": 1
                   }
                 ],
-                "dataVariable": "incident_duration",
+                "dataVariable": "speed",
                 "scale": 1.0,
                 "scaleByValue": true,
                 "imageUrl": "test/images/arrow32.png",
                 "minDisplayValue": 0,
-                "maxDisplayValue": 1500,
+                "maxDisplayValue": 10,
                 "legendTicks": 4,
                 "featureInfoFields": {
-                  "incident_date": "Date",
-                  "incident_severity": "Severity"
+                  "current_date": "date",
+                  "incident_severity": "speed"
                 }
               }
             }

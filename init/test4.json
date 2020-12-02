@@ -34,7 +34,7 @@
                 "dataVariable": "speed",
                 "scale": 1.0,
                 "scaleByValue": true,
-                "imageUrl": "test/images/arrow32.png",
+                "imageUrl": "test/images/pow32.png",
                 "minDisplayValue": 0,
                 "maxDisplayValue": 10,
                 "legendTicks": 4,
