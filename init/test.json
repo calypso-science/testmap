@@ -18,7 +18,9 @@
                 "dataVariable": "Magnitude",
                 "scaleByValue": true
               },
-              "displayDuration": 2880
+              "displayDuration": 2880,
+              "isEnabled":true,
+              "isShown":false
             },
             {
               "name": "Auto Incidents (CSV)",
