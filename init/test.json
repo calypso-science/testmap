@@ -92,7 +92,10 @@
           ]
         },
       ],
-      "isOpen": true
+      "isOpen": true,
+      "isEnabled":true,
+      "isShown":false,
+      "isLegendVisible":false
     },
   ],
   "workbench": [
