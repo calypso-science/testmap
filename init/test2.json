@@ -1,0 +1,76 @@
+{
+  "catalog": [
+    {
+      "name": "Test Data",
+      "type": "group",
+      "items": [
+        {
+          "name": "Temporal",
+          "type": "group",
+          "items": [
+            {
+              "name": "Pacific Earthquakes (CSV)",
+              "type": "csv",
+              "id"  : "caca",
+              "url": "test/earthquakes.csv",
+              "disableUserChanges": true,
+              "tableStyle": {
+                "dataVariable": "Magnitude",
+                "scaleByValue": true
+              },
+              "displayDuration": 2880,
+              "isEnabled":true,
+              "isLegendVisible": false,
+              "isShown":false
+            },
+            {
+              "name": "Auto Incidents (CSV)",
+              "type": "csv",
+              "url": "test/incidents.csv",
+              "isEnabled":true,
+              "isLegendVisible": false,
+              "isShown":false,
+              "tableStyle": {
+                "colorMap": [
+                  {
+                    "color": "rgba(0,0,200,1.0)",
+                    "offset": 0
+                  },
+                  {
+                    "color": "rgba(200,200,200,1.00)",
+                    "offset": 0.5
+                  },
+                  {
+                    "color": "rgba(200,0,0,1.00)",
+                    "offset": 1
+                  }
+                ],
+                "dataVariable": "incident_duration",
+                "scale": 1.2,
+                "scaleByValue": true,
+                "imageUrl": "test/images/pow32.png",
+                "minDisplayValue": 0,
+                "maxDisplayValue": 1500,
+                "legendTicks": 4,
+                "featureInfoFields": {
+                  "incident_date": "Date",
+                  "incident_severity": "Severity"
+                }
+              }
+            }
+          ]
+        },
+      ],
+      "isOpen": true,
+    },
+  ],
+  "workbench": [
+    "caca"
+  ],
+  "homeCamera": {
+    "north": -30,
+    "east": 179,
+    "south": -47,
+    "west": 165
+  },
+}
