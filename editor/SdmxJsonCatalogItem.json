@@ -11,6 +11,16 @@
       "title": "Data URL component",
       "description": "The 'data' SDMX URL component, eg. 'data' in http://stats.oecd.org/sdmx-json/data/QNA.\nDefaults to 'data'."
     },
+    "sdmxVersionNumber": {
+      "type": "number",
+      "title": "Sdmx version number",
+      "description": "The SDMX version number\nDefaults to 2.0."
+    },
+    "measureDimensionId": {
+      "type": "string",
+      "title": "Measure dimension ID",
+      "description": "The measure dimension id\nDefaults to 'MEASURE'."
+    },
     "dataflowUrlComponent": {
       "type": "string",
       "title": "Dataflow URL component",

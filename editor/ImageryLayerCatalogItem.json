@@ -51,6 +51,38 @@
       "type": "string",
       "title": "Initial time source",
       "description": "Options for the value of the animation timeline at start. Valid options in config file are:\n    initialTimeSource: \"present\"                            // closest to today's date\n    initialTimeSource: \"start\"                              // start of time range of animation\n    initialTimeSource: \"end\"                                // end of time range of animation\n    initialTimeSource: An ISO8601 date e.g. \"2015-08-08\"    // specified date or nearest if date is outside range"
+    },
+    "showOnChart": {
+      "type": "boolean",
+      "title": "Show on chart",
+      "description": "Whether to show imagery availability on charts.",
+      "format": "checkbox"
+    },
+    "dontChartAlone": {
+      "type": "boolean",
+      "title": "Dont chart alone",
+      "description": "Whether this layer is sufficient to warrant a chart.",
+      "format": "checkbox"
+    },
+    "chartColor": {
+      "type": "string",
+      "title": "Chart color",
+      "description": "The color of how the dataset will displayed on the chart"
+    },
+    "chartType": {
+      "type": "string",
+      "title": "Chart type",
+      "description": "The name style of how the item will be rendered on the chart"
+    },
+    "featureTimesProperty": {
+      "type": "string",
+      "title": "Feature times property",
+      "description": "The name of a property in a feature returned from this layer's feature query service\nthat indicates the times at which this layer covers this position. For example, historical and\nnear-real-time satellite imagery often comes as daily swaths, with a given area on the globe\npotentially only covered every number of days."
+    },
+    "tileErrorThresholdBeforeDisabling": {
+      "type": "number",
+      "title": "Tile error threshold before disabling",
+      "description": "Allow a threshold to be configured for the number of tile fails\nbefore disabling the layer."
     }
   },
   "allOf": [

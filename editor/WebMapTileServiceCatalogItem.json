@@ -30,6 +30,15 @@
         "type": "string"
       }
     },
+    "tileMatrixMaximumLevel": {
+      "type": "array",
+      "title": "Tile matrix maximum level",
+      "description": "The maximum level in the matrix set.",
+      "format": "tabs",
+      "items": {
+        "type": "string"
+      }
+    },
     "tilingScheme": {
       "type": "object",
       "title": "Tiling scheme",

@@ -129,20 +129,6 @@
       "description": "Indicates that the source of this data should be hidden from the UI (obviously this isn't super-secure as you\ncan just look at the network requests).",
       "format": "checkbox"
     },
-    "_sourceInfoItemNames": {
-      "type": "array",
-      "title": "_source info item names",
-      "description": "The names of items in the CatalogMember's info array that contain details of the source of this\nCatalogMember's data. This should be overridden by children of this class.",
-      "format": "tabs",
-      "items": {
-        "type": "string"
-      }
-    },
-    "_nameInCatalog": {
-      "type": "string",
-      "title": "_name in catalog",
-      "description": "The name of the item to show in the catalog, if different from `name`. Default undefined.\nThis property is observed."
-    },
     "nameInCatalog": {
       "type": "string",
       "title": "Name in catalog",

@@ -65,6 +65,12 @@
       "description": "A value indicating whether each catalog item's name should be populated from\nindividual resources instead of from the CKAN dataset.",
       "format": "checkbox"
     },
+    "useCombinationNameWhereMultipleResources": {
+      "type": "boolean",
+      "title": "Use combination name where multiple resources",
+      "description": "A value indicating whether each catalog item's name should be populated from\nindividual resources and the CKAN dataset where the are multiple resources for a single dataset.",
+      "format": "checkbox"
+    },
     "allowEntireWmsServers": {
       "type": "boolean",
       "title": "Allow entire WMS servers",

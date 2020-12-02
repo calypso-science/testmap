@@ -77,7 +77,7 @@
     "isMappable": {
       "type": "boolean",
       "title": "Is mappable",
-      "description": "A value indicating whether this data source is mappable.",
+      "description": "A value indicating whether this data source can be shown on the map (as opposed to a time-series dataset,\nfor instance, which can only be shown in a chart).",
       "format": "checkbox"
     },
     "showsInfo": {

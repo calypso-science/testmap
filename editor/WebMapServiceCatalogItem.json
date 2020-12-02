@@ -56,6 +56,12 @@
       "title": "Min scale denominator",
       "description": "The denominator of the largest scale (smallest denominator) for which tiles should be requested.  For example, if this value is 1000, then tiles representing\na scale larger than 1:1000 (i.e. numerically smaller denominator, when zooming in closer) will not be requested.  Instead, tiles of the largest-available scale, as specified by this property,\nwill be used and will simply get blurier as the user zooms in closer."
     },
+    "hideLayerAfterMinScaleDenominator": {
+      "type": "boolean",
+      "title": "Hide layer after min scale denominator",
+      "description": "A value indicating whether to continue showing tiles or hide tiles when the WebMapServiceCatalogItem's minScaleDenominator\nis exceeded.",
+      "format": "checkbox"
+    },
     "maxRefreshIntervals": {
       "type": "number",
       "title": "Max refresh intervals",
@@ -139,6 +145,11 @@
       "items": {
         "type": "number"
       }
+    },
+    "chartDisclaimer": {
+      "type": "string",
+      "title": "Chart disclaimer",
+      "description": "A HTML string to show above the chart as a disclaimer"
     }
   },
   "allOf": [
