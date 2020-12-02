@@ -47,7 +47,7 @@
                 "dataVariable": "incident_duration",
                 "scale": 1.2,
                 "scaleByValue": true,
-                "imageUrl": "test/images/arrow.png",
+                "imageUrl": "test/images/arrow32.png",
                 "minDisplayValue": 0,
                 "maxDisplayValue": 1500,
                 "legendTicks": 4,
