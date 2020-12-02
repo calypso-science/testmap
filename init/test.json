@@ -29,6 +29,7 @@
               "url": "test/incidents.csv",
               "isEnabled":true,
               "isLegendVisible": false,
+              "isShown":false,
               "tableStyle": {
                 "colorMap": [
                   {
@@ -47,7 +48,7 @@
                 "dataVariable": "incident_duration",
                 "scale": 1.2,
                 "scaleByValue": true,
-                "imageUrl": "test/images/arrow32.png",
+                "imageUrl": "test/images/pow32.png",
                 "minDisplayValue": 0,
                 "maxDisplayValue": 1500,
                 "legendTicks": 4,
@@ -56,43 +57,6 @@
                   "incident_severity": "Severity"
                 }
               }
-            }
-          ]
-        },
-        {
-          "name": "CZML files",
-          "type": "group",
-          "items": [
-            {
-              "name": "Simple Test (CZML)",
-              "type": "czml",
-              "url": "test/simple.czml"
-            },
-            {
-              "name": "Large feature info box (CZML)",
-              "type": "czml",
-              "url": "test/bigInfobox.czml"
-            },
-            {
-                "name": "Embedded CZML",
-                "type": "czml",
-                "data": [
-                    {
-                        "id": "document",
-                        "version": "1.0"
-                    },
-                    {
-                        "position": {
-                            "cartographicDegrees": [133.0, -25.0, 0.0]
-                        },
-                        "point": {
-                            "pixelSize": 5,
-                            "color": {
-                                "rgba": [255, 0, 0, 255]
-                            }
-                        }
-                    }
-                ]
             }
           ]
         },
@@ -105,8 +69,8 @@
   ],
   "homeCamera": {
     "north": -30,
-    "east": 165,
+    "east": 179,
     "south": -47,
-    "west": 179
+    "west": 165
   },
 }
