@@ -10,8 +10,8 @@
           "items": [
             {
               "name": "Tidal current",
-              "type": "csv",
-              "url": "test/current.csv",
+              "type": "czml",
+              "url": "test/remy.czml",
               "isEnabled":true,
               "isLegendVisible": false,
               "isShown":false,
