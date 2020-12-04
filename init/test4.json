@@ -1,39 +1,29 @@
 {
   "catalog": [
     {
-      "name": "Test Data",
+      "name": "South Island",
       "type": "group",
       "items": [
         {
-          "name": "Temporal",
+          "name": "Foveaux Strait",
           "type": "group",
           "items": [
             {
-              "name": "Tidal current",
+              "name": "Foveaux Strait tidal currents",
               "type": "czml",
               "url": "test/remy.czml",
               "isEnabled":true,
-              "isLegendVisible": true,
+              "isLegendVisible": false,
               "isShown":false,
-              //"legendUrl": "images/solar.png",
-              "tableStyle": {
-                "dataVariable": "speed",
-                "scaleByValue": true,
-                "colorMap": [
-                  {
-                    "color": "rgba(0,0,200,1.0)",
-                    "offset": 0
-                  },
-                  {
-                    "color": "rgba(200,200,200,1.00)",
-                    "offset": 0.5
-                  },
-                  {
-                    "color": "rgba(200,0,0,1.00)",
-                    "offset": 1
-                  }
-                ],
-              }
+              "legendUrl": "images/solar.png",
+            },
+            {
+              "name": "Virtual meters",
+              "type": "csv",
+              "url": "test/current.csv",
+              "isEnabled":true,
+              "isLegendVisible": false,
+              "isShown":false,
             }
           ]
         },
