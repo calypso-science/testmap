@@ -15,8 +15,25 @@
               "isEnabled":true,
               "isLegendVisible": true,
               "isShown":false,
-              "legendUrl": "images/solar.png"
-              
+              //"legendUrl": "images/solar.png",
+              "tableStyle": {
+                "dataVariable": "speed",
+                "scaleByValue": true,
+                "colorMap": [
+                  {
+                    "color": "rgba(0,0,200,1.0)",
+                    "offset": 0
+                  },
+                  {
+                    "color": "rgba(200,200,200,1.00)",
+                    "offset": 0.5
+                  },
+                  {
+                    "color": "rgba(200,0,0,1.00)",
+                    "offset": 1
+                  }
+                ],
+              }
             }
           ]
         },
