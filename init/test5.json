@@ -10,28 +10,14 @@
           "isEnabled":true,
           "items": [
             {
-              "name": "Pacific Earthquakes (CSV)",
+              "name": "Current (CSV)",
               "type": "csv",
               "id"  : "caca",
-              "url": "test/earthquakes.csv",
+              "url": "test/current.csv",
               "disableUserChanges": true,
               "tableStyle": {
-                "dataVariable": "Magnitude",
-                "scaleByValue": true
-              },
-              "displayDuration": 2880,
-              "isEnabled":true,
-              "isLegendVisible": false,
-              "isShown":false
-            },
-            {
-              "name": "Auto Incidents (CSV)",
-              "type": "csv",
-              "url": "test/incidents.csv",
-              "isEnabled":true,
-              "isLegendVisible": false,
-              "isShown":false,
-              "tableStyle": {
+                "dataVariable": "speed",
+                "scaleByValue": true,
                 "colorMap": [
                   {
                     "color": "rgba(0,0,200,1.0)",
@@ -46,19 +32,16 @@
                     "offset": 1
                   }
                 ],
-                "dataVariable": "incident_duration",
-                "scale": 1.2,
-                "scaleByValue": true,
                 "imageUrl": "test/images/pow32.png",
                 "minDisplayValue": 0,
-                "maxDisplayValue": 1500,
+                "maxDisplayValue": 2,
                 "legendTicks": 4,
-                "featureInfoFields": {
-                  "incident_date": "Date",
-                  "incident_severity": "Severity"
-                }
-              }
-            }
+              },
+              "displayDuration": 2880,
+              "isEnabled":true,
+              "isLegendVisible": true,
+              "isShown":false
+            },
           ]
         },
       ],
